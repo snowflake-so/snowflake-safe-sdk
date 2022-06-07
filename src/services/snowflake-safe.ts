@@ -1,4 +1,10 @@
-import { AnchorProvider, Idl, Program, utils } from "@project-serum/anchor";
+import {
+  AnchorProvider,
+  Idl,
+  Program,
+  ProgramAccount,
+  utils,
+} from "@project-serum/anchor";
 import { InstructionBuilder } from "../builders/instruction-builder";
 import SafeFinder from "./safe-finder";
 import { SNOWFLAKE_SAFE_IDL } from "../idl";
@@ -16,6 +22,7 @@ import {
 import { MultisigJobType } from "../models/multisig-job";
 import { ISnowflakeSafe } from "../interfaces/safe-interface";
 import { TransactionSender } from "./transaction-sender";
+import { SafeType } from "src/models";
 
 export class SnowflakeSafe implements ISnowflakeSafe {
   program: Program;
@@ -263,6 +270,20 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     );
 
     return [ix];
+  }
+
+  async fetchSafe(safeAddress: PublicKey): Promise<SafeType> {
+    return this.finder.findSafe(safeAddress);
+  }
+
+  async fetchJob(jobAddress: PublicKey): Promise<MultisigJobType> {
+    return this.finder.findJob(jobAddress);
+  }
+
+  async fetchAllJobs(
+    safeAddress: PublicKey
+  ): Promise<ProgramAccount<MultisigJobType>[]> {
+    return this.finder.findJobsOfSafe(safeAddress);
   }
 
   async findSafeSignerAddress(

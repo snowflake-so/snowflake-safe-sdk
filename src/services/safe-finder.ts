@@ -1,6 +1,5 @@
 import { Program, ProgramAccount } from "@project-serum/anchor";
 import { GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
-import { JOB_ACCOUNT_LAYOUT } from "../constants/job-layout";
 import { MultisigJobType } from "../models/multisig-job";
 import { SafeType } from "../models/safe";
 
@@ -33,7 +32,7 @@ export default class SafeFinder {
   private getSafeAddressFilter(publicKey: PublicKey): GetProgramAccountsFilter {
     return {
       memcmp: {
-        offset: JOB_ACCOUNT_LAYOUT.offsetOf("safe"),
+        offset: 8 + 32,
         bytes: publicKey.toBase58(),
       },
     };

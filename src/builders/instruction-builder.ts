@@ -122,7 +122,9 @@ export class InstructionBuilder {
     let safeSigner = changeThresholdIx.keys.find((key: any) => {
       return key.pubkey.equals(safeSignerAddress);
     });
-    safeSigner.isSigner = false;
+    if (safeSigner) {
+      safeSigner.isSigner = false;
+    }
 
     return changeThresholdIx;
   }
@@ -239,8 +241,8 @@ export class InstructionBuilder {
     flowActions: any
   ): TransactionInstruction {
     let remainingAccountMetas: AccountMeta[] = flowActions.reduce(
-      (result, current) => {
-        const currentAccounts = current.accounts.map((account) => {
+      (result: any, current: any) => {
+        const currentAccounts = current.accounts.map((account: any) => {
           return { ...account, isSigner: false };
         });
         result = result.concat(currentAccounts, {

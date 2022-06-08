@@ -92,11 +92,27 @@ const ix = await snowflakeSafe.createChangeThresholdInstruction(
 
 ### Approve a proposal
 
+```typescript
+await snowflakeSafe.approveProposal(safeAddress, flowAddress);
+```
+
 ### Reject a proposal
+
+```typescript
+await snowflakeSafe.rejectProposal(safeAddress, flowAddress);
+```
 
 ### Execute a job
 
+```typescript
+await snowflakeSafe.executeMultisigFlow(flowAddress, flowActions, safeAddress);
+```
+
 ### Abort a job
+
+```typescript
+await snowflakeSafe.abortFlow(safeAddress, flowAddress);
+```
 
 ### Build an once-off scheduled job
 

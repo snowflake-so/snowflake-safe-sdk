@@ -147,7 +147,8 @@ export class InstructionBuilder {
       signers: [],
     };
 
-    const serializableJob = new MultisigJob(clientFlow).buildNewFlowJob(
+    const serializableJob = new MultisigJob().buildNewMultisigFlow(
+      clientFlow,
       safeAddress
     );
     const createFlowIx = this.program.instruction.createFlow(

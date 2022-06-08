@@ -1,5 +1,7 @@
 import {
+  Job,
   JobBuilder,
+  SerializableAction,
   SerializableJob,
   TriggerType,
 } from "@snowflake-so/snowflake-sdk";
@@ -18,51 +20,64 @@ export enum ProposalStateType {
   Deprecated = 7,
 }
 
-export interface MultisigJobType extends SerializableJob {
+export interface MultisigJobType extends Job {
   safe: PublicKey;
   ownerSetSeq: number;
   approvals: ApprovalRecord[];
-  proposalState: ProposalStateType;
+  proposalStage: ProposalStateType;
 }
 
-export class MultisigJob {
-  flow: MultisigJobType;
-  constructor(flow: MultisigJobType) {
-    this.flow = flow;
+export class MultisigJob extends Job implements MultisigJobType {
+  safe: PublicKey;
+  ownerSetSeq: number;
+  approvals: ApprovalRecord[];
+  proposalStage: ProposalStateType;
+
+  constructor() {
+    super();
   }
-  buildNewFlowJob(safeAddress: PublicKey): SerializableJob {
-    const jobBuilder = new JobBuilder().jobName(this.flow.name);
+
+  buildNewMultisigFlow(
+    clientFlow: MultisigJobType,
+    safeAddress: PublicKey
+  ): SerializableJob {
+    const jobBuilder = new JobBuilder().fromExistingJob(clientFlow);
     const isScheduledOnce =
-      !this.flow.recurring && this.flow.triggerType === TriggerType.Time;
+      !this.recurring && this.triggerType === TriggerType.Time;
     const isScheduledCron =
-      this.flow.recurring && this.flow.triggerType === TriggerType.Time;
+      this.recurring && this.triggerType === TriggerType.Time;
     const isScheduledConditional =
-      this.flow.triggerType === TriggerType.ProgramCondition;
+      this.triggerType === TriggerType.ProgramCondition;
     if (isScheduledOnce) {
-      jobBuilder.scheduleOnce(this.flow.nextExecutionTime.toNumber());
+      jobBuilder.scheduleOnce(this.nextExecutionTime);
     }
     if (isScheduledCron) {
-      jobBuilder.scheduleCron((this.flow as any).cron, this.flow.remainingRuns);
+      jobBuilder.scheduleCron((this as any).cron, this.remainingRuns);
     }
     if (isScheduledConditional) {
-      jobBuilder.scheduleConditional(this.flow.remainingRuns);
+      jobBuilder.scheduleConditional(this.remainingRuns);
     }
     const job = jobBuilder.build();
-    job.triggerType = this.flow.triggerType;
+    job.triggerType = this.triggerType;
 
-    if (this.flow.nextExecutionTime) {
-      job.nextExecutionTime = this.flow.nextExecutionTime.toNumber();
+    if (this.nextExecutionTime) {
+      job.nextExecutionTime = this.nextExecutionTime;
     }
-    if (this.flow.scheduleEndDate) {
-      job.scheduleEndDate = this.flow.scheduleEndDate.toNumber();
+    if (this.scheduleEndDate) {
+      job.scheduleEndDate = this.scheduleEndDate;
     }
-    if (this.flow.extra) {
-      job.extra = this.flow.extra;
+    if (this.extra) {
+      job.extra = this.extra;
+    }
+
+    let actions = [];
+    for (const instruction of job.instructions) {
+      actions.push(SerializableAction.fromInstruction(instruction));
     }
 
     const serializableJob = job.toSerializableJob();
-    serializableJob.actions = this.flow.actions;
-    serializableJob.ownerSetSeqno = this.flow.ownerSetSeq;
+    serializableJob.actions = actions;
+    serializableJob.ownerSetSeqno = this.ownerSetSeq;
     serializableJob.approvals = [];
     serializableJob.safe = safeAddress;
     serializableJob.retryWindow = RETRY_WINDOW;

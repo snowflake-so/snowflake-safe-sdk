@@ -1,10 +1,4 @@
-import {
-  AnchorProvider,
-  Idl,
-  Program,
-  ProgramAccount,
-  utils,
-} from "@project-serum/anchor";
+import { AnchorProvider, Idl, Program, utils } from "@project-serum/anchor";
 import { InstructionBuilder } from "../builders/instruction-builder";
 import SafeFinder from "./safe-finder";
 import { SNOWFLAKE_SAFE_IDL } from "../idl";
@@ -42,6 +36,30 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     this.finder = new SafeFinder(this.program);
   }
 
+  /**
+   * ## Create a new safe
+   * 
+   * ### Example
+   * ```
+   * const safeKeypair = Keypair.generate();
+   * 
+   * const input = {
+      approvalsRequired: 1,
+      owners: [owner],
+    };
+   * const txId = await snowflakeSafe.createSafe(
+      safeKeypair,
+      input.owners,
+      input.approvalsRequired
+    );
+   * ```
+   * ### Parameters
+   * 
+   * @param safeKeypair A generated keypair for the safe
+   * @param owners An array of public keys for owners of the safe
+   * @param approvalsRequired The number of owners required to approve a proposal
+   * @returns A transaction signature
+   */
   async createSafe(
     safeKeypair: Keypair,
     owners: PublicKey[],
@@ -94,7 +112,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     const instructions = [...ixs, ix, approveProposalIx];
     const tx = await this.transactionSender.sendWithWallet({
       instructions,
-      signers: [],
+      signers: [newFlowKeypair],
     });
 
     return tx;
@@ -218,10 +236,18 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
+  /**
+   * ## Create a proposal to add a new owner to the safe
+   * Note: The method will create a new onchain flow and can only be executed if it has enough approvals
+   * ### Parameters
+   * @param safeAddress Public key of the safe
+   * @param safeOwner Public key of added owner
+   * @returns A transaction signature
+   */
   async createAddOwnerInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
-  ): Promise<TransactionInstruction[]> {
+  ): Promise<TransactionInstruction> {
     const [safeSignerAddress] = await this.findSafeSignerAddress(
       safeAddress,
       this.program.programId
@@ -233,13 +259,13 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       safeOwner
     );
 
-    return [ix];
+    return ix;
   }
 
   async createRemoveOwnerInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
-  ): Promise<TransactionInstruction[]> {
+  ): Promise<TransactionInstruction> {
     const [safeSignerAddress] = await this.findSafeSignerAddress(
       safeAddress,
       this.program.programId
@@ -251,13 +277,13 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       safeOwner
     );
 
-    return [ix];
+    return ix;
   }
 
   async createChangeThresholdInstruction(
     safeAddress: PublicKey,
     threshold: number
-  ): Promise<TransactionInstruction[]> {
+  ): Promise<TransactionInstruction> {
     const [safeSignerAddress] = await this.findSafeSignerAddress(
       safeAddress,
       this.program.programId
@@ -269,7 +295,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       threshold
     );
 
-    return [ix];
+    return ix;
   }
 
   async fetchSafe(safeAddress: PublicKey): Promise<SafeType> {
@@ -280,9 +306,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return this.finder.findJob(jobAddress);
   }
 
-  async fetchAllJobs(
-    safeAddress: PublicKey
-  ): Promise<ProgramAccount<MultisigJobType>[]> {
+  async fetchAllJobs(safeAddress: PublicKey): Promise<MultisigJobType[]> {
     return this.finder.findJobsOfSafe(safeAddress);
   }
 

@@ -47,15 +47,15 @@ export interface ISnowflakeSafe {
   createAddOwnerInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
-  ): Promise<TransactionInstruction[]>;
+  ): Promise<TransactionInstruction>;
 
   createRemoveOwnerInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
-  ): Promise<TransactionInstruction[]>;
+  ): Promise<TransactionInstruction>;
 
   createChangeThresholdInstruction(
     safeAddress: PublicKey,
     threshold: number
-  ): Promise<TransactionInstruction[]>;
+  ): Promise<TransactionInstruction>;
 }

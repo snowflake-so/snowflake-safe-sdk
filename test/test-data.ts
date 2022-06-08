@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { PublicKey } from "@solana/web3.js";
-import { UnixTimeStamp } from "@snowflake-so/snowflake-sdk";
+import { UnixTimeStamp } from "src/models";
 
 export const instructions = [
   {

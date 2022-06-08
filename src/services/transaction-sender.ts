@@ -1,6 +1,6 @@
 import { Transaction, TransactionSignature } from "@solana/web3.js";
 import { AnchorProvider } from "@project-serum/anchor";
-import { InstructionsAndSigners } from "@snowflake-so/snowflake-sdk";
+import { InstructionsAndSigners } from "src/models";
 
 export class TransactionSender {
   provider: AnchorProvider;

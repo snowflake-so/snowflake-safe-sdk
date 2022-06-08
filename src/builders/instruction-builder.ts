@@ -6,8 +6,8 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { Program, AnchorProvider } from "@project-serum/anchor";
+import { MultisigJob } from "../models/multisig-job";
 import BN from "bn.js";
-import { MultisigJobType, MultisigJob } from "../models/multisig-job";
 
 export class InstructionBuilder {
   program: Program;
@@ -131,12 +131,13 @@ export class InstructionBuilder {
 
   buildCreateFlowInstruction(
     requestedByAddress: PublicKey,
-    account_size: number,
-    clientFlow: MultisigJobType,
+    accountSize: number,
+    multisigJob: MultisigJob,
     safeAddress: PublicKey,
     newFlowKeypair: Keypair,
     systemProgram: PublicKey
   ): TransactionInstruction {
+    const serializableJob = multisigJob.toSerializableJob();
     let ctx = {
       accounts: {
         flow: newFlowKeypair.publicKey,
@@ -147,15 +148,13 @@ export class InstructionBuilder {
       signers: [],
     };
 
-    const serializableJob = new MultisigJob().buildNewMultisigFlow(
-      clientFlow,
-      safeAddress
-    );
     const createFlowIx = this.program.instruction.createFlow(
-      account_size,
+      accountSize,
       serializableJob,
       ctx
     );
+    multisigJob.safe = safeAddress;
+
     return createFlowIx;
   }
 

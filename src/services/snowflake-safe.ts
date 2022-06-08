@@ -1,11 +1,3 @@
-import { AnchorProvider, Idl, Program, utils } from "@project-serum/anchor";
-import { InstructionBuilder } from "../builders/instruction-builder";
-import SafeFinder from "./safe-finder";
-import { SNOWFLAKE_SAFE_IDL } from "../idl";
-import {
-  MEMO_PROGRAM_ID,
-  SNOWFLAKE_SAFE_PROGRAM_ID,
-} from "../config/program-id";
 import {
   Keypair,
   PublicKey,
@@ -13,10 +5,18 @@ import {
   TransactionInstruction,
   TransactionSignature,
 } from "@solana/web3.js";
-import { MultisigJobType } from "../models/multisig-job";
+import {
+  MEMO_PROGRAM_ID,
+  SNOWFLAKE_SAFE_PROGRAM_ID,
+} from "../config/program-id";
+import SafeFinder from "./safe-finder";
+import { AnchorProvider, Idl, Program, utils } from "@project-serum/anchor";
+import { InstructionBuilder } from "../builders/instruction-builder";
+import { SNOWFLAKE_SAFE_IDL } from "../idl";
 import { ISnowflakeSafe } from "../interfaces/safe-interface";
 import { TransactionSender } from "./transaction-sender";
-import { SafeType } from "src/models";
+import { MultisigJob, SafeType } from "../models";
+import { DEFAULT_FLOW_SIZE, ErrorMessage } from "../config";
 
 export class SnowflakeSafe implements ISnowflakeSafe {
   program: Program;
@@ -38,7 +38,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
 
   /**
    * ## Create a new safe
-   * 
+   * Note: Approvals required must be lower than or equal to the total number of safe owners.
    * ### Example
    * ```
    * const safeKeypair = Keypair.generate();
@@ -54,7 +54,6 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     );
    * ```
    * ### Parameters
-   * 
    * @param safeKeypair A generated keypair for the safe
    * @param owners An array of public keys for owners of the safe
    * @param approvalsRequired The number of owners required to approve a proposal
@@ -65,6 +64,8 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     owners: PublicKey[],
     approvalsRequired: number
   ): Promise<TransactionSignature> {
+    this.validateCreateSafe(owners, approvalsRequired);
+
     const instructions = [];
     const [, safeSignerNonce] = await this.findSafeSignerAddress(
       safeKeypair.publicKey,
@@ -88,23 +89,61 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
+  /**
+   * ## Create a multi-signature flow
+   * ### Description
+   * Flow requires approvals (minimum as a declared approvals_required of the safe). It can be `approve` or `reject` by using `approveProposal` or `rejectProposal`. The create flow can be executed manually or automatically by Snowflake node operators.
+   * Note:
+   * - Only the owner of the safe can create a flow.
+   * - Only the flow creator can delete the flow.
+   * - Only safe owners can approve, abort or reject a flow.
+   * - Only safe owners can execute a flow.
+   *
+   * ### Example
+   * ```
+   * const newFlowKeypair = Keypair.generate();
+     const job = new MultisigJobBuilder()
+      .jobInstructions(instructions)
+      .jobName("hello world")
+      .build();
+
+     const txId = await snowflakeSafe.createFlow(
+      safeAddress,
+      DEFAULT_FLOW_SIZE,
+      job,
+      newFlowKeypair,
+      []
+     );
+   * ```
+   *
+   * ### Parameters
+   * @param safeAddress Publickey of the safe
+   * @param accountSize The size of the account (default: 1800)
+   * @param multisigJob The multisig job to be executed
+   * @param newFlowKeypair The keypair of the new flow
+   * @param ixs List of executed instructions
+   * @returns A transaction signature
+   */
   async createFlow(
     safeAddress: PublicKey,
-    accountSize: number,
-    clientFlow: MultisigJobType,
+    accountSize: number = DEFAULT_FLOW_SIZE,
+    multisigJob: MultisigJob,
     newFlowKeypair: Keypair,
     ixs: TransactionInstruction[]
   ): Promise<TransactionSignature> {
+    multisigJob.validateForCreate();
+
     const approveProposalIx =
       await this.instructionBuilder.buildApproveProposalInstruction(
         safeAddress,
         newFlowKeypair.publicKey,
         this.wallet
       );
+
     const ix = await this.instructionBuilder.buildCreateFlowInstruction(
       this.wallet,
       accountSize,
-      clientFlow,
+      multisigJob,
       safeAddress,
       newFlowKeypair,
       SystemProgram.programId
@@ -118,7 +157,16 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
-  async deleteFlow(flowAddress: PublicKey): Promise<string> {
+  /**
+   * ## Delete a flow
+   * ### Description
+   * Only a flow creator can delete a flow.
+   *
+   * ### Parameters
+   * @param flowAddress Public key of the flow
+   * @returns A transaction signature
+   */
+  async deleteFlow(flowAddress: PublicKey): Promise<TransactionSignature> {
     const instructions = [];
     const ix = await this.instructionBuilder.buildDeleteFlowIx(
       this.wallet,
@@ -135,10 +183,20 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
+  /**
+   * ## Approve a proposal
+   * ### Description
+   * Note: Only safe owners can approve a proposal.
+   *
+   * ### Parameters
+   * @param safeAddress Public key of the safe
+   * @param flowAddress Public key of the flow
+   * @returns A transaction signature
+   */
   async approveProposal(
     safeAddress: PublicKey,
     flowAddress: PublicKey
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const instructions = [];
     const approveProposalInstruction =
       await this.instructionBuilder.buildApproveProposalInstruction(
@@ -157,10 +215,20 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
+  /**
+   * ## Reject a proposal
+   * ### Description
+   * Note: Only safe owners can reject a proposal.
+   *
+   * ### Parameters
+   * @param safeAddress Public key of the safe
+   * @param flowAddress Public key of the flow
+   * @returns A transaction signature
+   */
   async rejectProposal(
     safeAddress: PublicKey,
     flowAddress: PublicKey
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     const instructions = [];
     const approveProposalInstruction =
       await this.instructionBuilder.buildRejectProposalInstruction(
@@ -179,10 +247,21 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
+  /**
+   * ## Abort a proposal
+   * ### Description
+   * - Only works if the flow is a recurring flow.
+   * - Only safe owners can abort a proposal.
+   *
+   * ### Parameters
+   * @param safeAddress Public key of the safe
+   * @param flowAddress Public key of the flow
+   * @returns A transaction signature
+   */
   async abortFlow(
     flowAddress: PublicKey,
     safeAddress: PublicKey
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     let instructions = [];
     const abortFlowIx = await this.instructionBuilder.buildAbortFlowInstruction(
       flowAddress,
@@ -200,11 +279,22 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return tx;
   }
 
+  /**
+   * ## Execute a flow
+   * ### Description
+   * - Only safe owners can execute a flow.
+   *
+   * ### Parameters
+   * @param flowAddress Public key of the flow
+   * @param flowActions List of flow actions
+   * @param safeAddress Public key of the safe
+   * @returns A transaction signature
+   */
   async executeMultisigFlow(
     flowAddress: PublicKey,
     flowActions: any[],
     safeAddress: PublicKey
-  ): Promise<string> {
+  ): Promise<TransactionSignature> {
     let instructions = [];
 
     const [safeSignerAddress] = await this.findSafeSignerAddress(
@@ -237,8 +327,8 @@ export class SnowflakeSafe implements ISnowflakeSafe {
   }
 
   /**
-   * ## Create a proposal to add a new owner to the safe
-   * Note: The method will create a new onchain flow and can only be executed if it has enough approvals
+   * ## Create add owner instruction
+   * Note: The method will create a new instruction to add new owner to the safe
    * ### Parameters
    * @param safeAddress Public key of the safe
    * @param safeOwner Public key of added owner
@@ -262,6 +352,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return ix;
   }
 
+  /**
+   * ## Create remove owner instruction
+   * Note: The method will create a new instruction to remove new owner to the safe
+   * ### Parameters
+   * @param safeAddress Public key of the safe
+   * @param safeOwner Public key of added owner
+   * @returns A transaction signature
+   */
   async createRemoveOwnerInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
@@ -280,6 +378,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return ix;
   }
 
+  /**
+   * ## Create change threshold instruction
+   * Note: The method will create a new instruction to change threshold of the safe
+   * ### Parameters
+   * @param safeAddress Public key of the safe
+   * @param safeOwner Public key of added owner
+   * @returns A transaction signature
+   */
   async createChangeThresholdInstruction(
     safeAddress: PublicKey,
     threshold: number
@@ -302,11 +408,11 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return this.finder.findSafe(safeAddress);
   }
 
-  async fetchJob(jobAddress: PublicKey): Promise<MultisigJobType> {
+  async fetchJob(jobAddress: PublicKey): Promise<MultisigJob> {
     return this.finder.findJob(jobAddress);
   }
 
-  async fetchAllJobs(safeAddress: PublicKey): Promise<MultisigJobType[]> {
+  async fetchAllJobs(safeAddress: PublicKey): Promise<MultisigJob[]> {
     return this.finder.findJobsOfSafe(safeAddress);
   }
 
@@ -318,5 +424,11 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       [utils.bytes.utf8.encode("SafeSigner"), safeAddress.toBuffer()],
       safeProgramId
     );
+  }
+
+  private validateCreateSafe(owners: PublicKey[], threshold: number) {
+    if (owners.length > threshold) {
+      throw new Error(ErrorMessage.CreateSafeWithInvalidApprovalsRequired);
+    }
   }
 }

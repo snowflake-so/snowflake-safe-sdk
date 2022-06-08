@@ -4,7 +4,7 @@ import {
   TransactionInstruction,
   TransactionSignature,
 } from "@solana/web3.js";
-import { MultisigJobType } from "../models/multisig-job";
+import { MultisigJob } from "src/models";
 
 export interface ISnowflakeSafe {
   createSafe(
@@ -16,7 +16,7 @@ export interface ISnowflakeSafe {
   createFlow(
     safeAddress: PublicKey,
     accountSize: number,
-    clientFlow: MultisigJobType,
+    clientFlow: MultisigJob,
     newFlowKeypair: Keypair,
     instructions: TransactionInstruction[]
   ): Promise<TransactionSignature>;

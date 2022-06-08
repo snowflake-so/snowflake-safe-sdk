@@ -1,13 +1,25 @@
-import {
-  Job,
-  JobBuilder,
-  SerializableAction,
-  SerializableJob,
-  TriggerType,
-} from "@snowflake-so/snowflake-sdk";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import ApprovalRecord from "./approval-record";
 import { RETRY_WINDOW } from "../config/job-config";
+import { DEFAULT_DEVELOPER_APP_ID } from "../config/job-constants";
+import { ErrorMessage } from "../config/error";
+import { SerializableAction } from "./action";
+import _ from "lodash";
+import BN from "bn.js";
+
+export type UnixTimeStamp = number;
+export type UTCOffset = number;
+
+export enum TriggerType {
+  None = 1,
+  Time = 2,
+  ProgramCondition = 3,
+}
+
+export enum FeeSource {
+  FromFeeAccount = 0,
+  FromFlow = 1,
+}
 
 export enum ProposalStateType {
   Pending = 0,
@@ -20,69 +32,121 @@ export enum ProposalStateType {
   Deprecated = 7,
 }
 
-export interface MultisigJobType extends Job {
+const NON_BN_FIELDS = [
+  "remainingRuns",
+  "triggerType",
+  "retryWindow",
+  "clientAppId",
+  "userUtcOffset",
+  "payFeeFrom",
+  "ownerSetSeq",
+  "proposalStage",
+];
+
+export class MultisigJob {
+  pubKey: PublicKey;
+  owner: PublicKey;
+  nextExecutionTime: UnixTimeStamp = 0;
+  recurring: boolean = false;
+  retryWindow: number = RETRY_WINDOW;
+  remainingRuns: number = 0;
+  dedicatedOperator: PublicKey;
+  clientAppId: number = 0;
+  expiryDate: UnixTimeStamp = 0;
+  expireOnComplete: boolean = false;
+  scheduleEndDate: UnixTimeStamp = 0;
+  userUtcOffset: UTCOffset = new Date().getTimezoneOffset() * 60;
+  lastScheduledExecution: UnixTimeStamp = 0;
+  createdDate: UnixTimeStamp = 0;
+  lastRentCharged: UnixTimeStamp = 0;
+  lastUpdatedDate: UnixTimeStamp = 0;
+  externalId: String = "";
+  cron: string = "";
+  name: string = "job - " + new Date().toLocaleDateString();
+  extra: String = "";
+  triggerType: TriggerType = TriggerType.None;
+  payFeeFrom: FeeSource = FeeSource.FromFeeAccount;
+  initialFund: number = 0;
+  appId: PublicKey = DEFAULT_DEVELOPER_APP_ID;
+  instructions: TransactionInstruction[] = [];
   safe: PublicKey;
   ownerSetSeq: number;
-  approvals: ApprovalRecord[];
-  proposalStage: ProposalStateType;
-}
+  approvals: ApprovalRecord[] = [];
+  proposalStage: ProposalStateType = ProposalStateType.Pending;
 
-export class MultisigJob extends Job implements MultisigJobType {
-  safe: PublicKey;
-  ownerSetSeq: number;
-  approvals: ApprovalRecord[];
-  proposalStage: ProposalStateType;
-
-  constructor() {
-    super();
+  isBNType(property: string): boolean {
+    return (
+      typeof (this as any)[property] === "number" &&
+      NON_BN_FIELDS.indexOf(property) < 0
+    );
   }
 
-  buildNewMultisigFlow(
-    clientFlow: MultisigJobType,
-    safeAddress: PublicKey
-  ): SerializableJob {
-    const jobBuilder = new JobBuilder().fromExistingJob(clientFlow);
-    const isScheduledOnce =
-      !this.recurring && this.triggerType === TriggerType.Time;
-    const isScheduledCron =
-      this.recurring && this.triggerType === TriggerType.Time;
-    const isScheduledConditional =
-      this.triggerType === TriggerType.ProgramCondition;
-    if (isScheduledOnce) {
-      jobBuilder.scheduleOnce(this.nextExecutionTime);
+  toSerializableJob(): SerializableJob {
+    const serJob = _.cloneDeepWith(
+      this,
+      function customizer(value, key: any, obj: any): any {
+        if (!key) return;
+        if (obj.isBNType(key)) return new BN(obj[key]);
+        if (obj[key] instanceof PublicKey) return obj[key];
+        if (key === "instructions") return [];
+      }
+    );
+    serJob.actions = [];
+    for (let instruction of this.instructions) {
+      const serAction = SerializableAction.fromInstruction(instruction);
+      serJob.actions.push(serAction);
     }
-    if (isScheduledCron) {
-      jobBuilder.scheduleCron((this as any).cron, this.remainingRuns);
-    }
-    if (isScheduledConditional) {
-      jobBuilder.scheduleConditional(this.remainingRuns);
-    }
-    const job = jobBuilder.build();
-    job.triggerType = this.triggerType;
+    delete serJob.instructions;
+    delete serJob.jobId;
+    return serJob;
+  }
 
-    if (this.nextExecutionTime) {
-      job.nextExecutionTime = this.nextExecutionTime;
-    }
-    if (this.scheduleEndDate) {
-      job.scheduleEndDate = this.scheduleEndDate;
-    }
-    if (this.extra) {
-      job.extra = this.extra;
-    }
+  validateForCreate() {
+    if (this.pubKey) throw new Error(ErrorMessage.CreateJobWithExistingPubkey);
+  }
 
-    let actions = [];
-    for (const instruction of job.instructions) {
-      actions.push(SerializableAction.fromInstruction(instruction));
+  validateForUpdate() {
+    if (!this.pubKey)
+      throw new Error(ErrorMessage.UpdateJobWithoutExistingPubkey);
+  }
+
+  static fromJobJson(jobJson: any): MultisigJob {
+    const job: MultisigJob = new MultisigJob();
+    Object.assign(job, jobJson);
+    return job;
+  }
+
+  static fromSerializableJob(
+    serJob: SerializableJob,
+    jobPubKey: PublicKey
+  ): MultisigJob {
+    const template = new MultisigJob();
+    const job: MultisigJob = _.cloneDeepWith(
+      serJob,
+      function customizer(value, key: any, obj: any): any {
+        if (!key) return;
+        if (template.isBNType(key)) {
+          return (obj[key] as BN).toNumber();
+        }
+        if (obj[key] instanceof PublicKey) return obj[key];
+        if (key === "actions") return [];
+      }
+    );
+    job.instructions = [];
+    for (let action of serJob.actions) {
+      const instruction = SerializableAction.toInstruction(action);
+      job.instructions.push(instruction);
     }
+    delete (job as any).actions;
+    job.pubKey = jobPubKey;
 
-    const serializableJob = job.toSerializableJob();
-    serializableJob.actions = actions;
-    serializableJob.ownerSetSeqno = this.ownerSetSeq;
-    serializableJob.approvals = [];
-    serializableJob.safe = safeAddress;
-    serializableJob.retryWindow = RETRY_WINDOW;
-    serializableJob.proposalState = 0;
-
-    return serializableJob;
+    return MultisigJob.fromJobJson(job);
   }
 }
+
+export type SerializableJob = any;
+
+export type InstructionsAndSigners = {
+  instructions: TransactionInstruction[];
+  signers: Signer[];
+};

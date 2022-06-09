@@ -2,6 +2,7 @@ import { AnchorProvider } from "@project-serum/anchor";
 import {
   clusterApiUrl,
   Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
@@ -51,16 +52,19 @@ const createRecurringFlow = async (ixs: TransactionInstruction[]) => {
 };
 
 const airdropSolToWallet = async () => {
-  const balance = await provider.connection.getBalance(testWallet.publicKey);
-  if (balance < 2000000000) {
-    const sig = await provider.connection.requestAirdrop(
-      testWallet.publicKey,
-      2000000000
-    );
-    await provider.connection.confirmTransaction(sig);
+  try {
+    const balance = await provider.connection.getBalance(testWallet.publicKey);
+    if (balance < 4 * LAMPORTS_PER_SOL) {
+      const sig = await provider.connection.requestAirdrop(
+        testWallet.publicKey,
+        2 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(sig);
+    }
+  } catch (error: any) {
+    console.log(error.message);
   }
 };
-
 beforeAll(async () => {
   const API_URL = clusterApiUrl("devnet");
   provider = initAnchorProvider(testWallet, API_URL);

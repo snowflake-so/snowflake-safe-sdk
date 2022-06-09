@@ -57,34 +57,42 @@ const txId = await snowflakeSafe.createSafe(
   input.approvalsRequired
 );
 ```
+### Create a new proposal
+Create a new proposal that can be executed by any safe owners
+```typescript
+```
+### Create a new recurring proposal
+Create a new recurring proposal that can be executed automatically by Snowflake node operators
+```typescript
+```
 
 ### Update an existing safe
 
-#### Add owner
+#### Add owner proposal
 
-The method will create a new instruction to add new owner to the safe
+The method will create a new instruction to propose adding new owner to the safe
 
 ```typescript
-const ix = await snowflakeSafe.createAddOwnerInstruction(safeAddress, newOwner);
+const ix = await snowflakeSafe.createAddOwnerProposalInstruction(safeAddress, newOwner);
 ```
 
-#### Remove owner
+#### Remove owner proposal
 
-The method will create a new instruction to remove an existing owner from the safe
+The method will create a new instruction to propose removing an existing owner from the safe
 
 ```typescript
-const ix = await snowflakeSafe.createRemoveOwnerInstruction(
+const ix = await snowflakeSafe.createRemoveOwnerProposalInstruction(
   safeAddress,
   newOwner
 );
 ```
 
-#### Change threshold
+#### Change threshold proposal
 
-The method will create a new instruction to change threshold of the safe
+The method will create a new instruction to propose changing threshold of the safe
 
 ```typescript
-const ix = await snowflakeSafe.createChangeThresholdInstruction(
+const ix = await snowflakeSafe.createChangeThresholdProposalInstruction(
   safeAddress,
   newOwner
 );
@@ -102,16 +110,16 @@ await snowflakeSafe.approveProposal(safeAddress, flowAddress);
 await snowflakeSafe.rejectProposal(safeAddress, flowAddress);
 ```
 
-### Execute a job
+### Execute a proposal
 
 ```typescript
-await snowflakeSafe.executeMultisigFlow(flowAddress, flowActions, safeAddress);
+await snowflakeSafe.executeProposal(flowAddress, flowActions, safeAddress);
 ```
 
-### Abort a job
+### Abort a recurring proposal
 
 ```typescript
-await snowflakeSafe.abortFlow(safeAddress, flowAddress);
+await snowflakeSafe.abortRecurringProposal(safeAddress, flowAddress);
 ```
 
 ### Build an once-off scheduled job

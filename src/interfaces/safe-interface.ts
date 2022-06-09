@@ -4,7 +4,7 @@ import {
   TransactionInstruction,
   TransactionSignature,
 } from "@solana/web3.js";
-import { MultisigJob } from "src/models";
+import { MultisigJob, SerializableAction } from "src/models";
 
 export interface ISnowflakeSafe {
   createSafe(
@@ -13,48 +13,54 @@ export interface ISnowflakeSafe {
     approvalsRequired: number
   ): Promise<TransactionSignature>;
 
-  createFlow(
+  createProposal(
     safeAddress: PublicKey,
-    accountSize: number,
-    clientFlow: MultisigJob,
-    newFlowKeypair: Keypair,
-    instructions: TransactionInstruction[]
-  ): Promise<TransactionSignature>;
+    proposalName: string,
+    proposalInstructions: TransactionInstruction[],
+    setupInstructions?: TransactionInstruction[],
+    accountSize?: number
+  ): Promise<[PublicKey, TransactionSignature]>;
 
-  deleteFlow(flowAddress: PublicKey): Promise<TransactionSignature>;
+  createRecurringProposal(
+    safeAddress: PublicKey,
+    proposal: MultisigJob,
+    setupInstructions?: TransactionInstruction[]
+  ): Promise<[PublicKey, TransactionSignature]>;
+
+  deleteProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
   approveProposal(
     safeAddress: PublicKey,
-    flowAddress: PublicKey
+    proposalAddress: PublicKey
   ): Promise<TransactionSignature>;
 
   rejectProposal(
     safeAddress: PublicKey,
-    flowAddress: PublicKey
+    proposalAddress: PublicKey
   ): Promise<TransactionSignature>;
 
-  abortFlow(
-    flowAddress: PublicKey,
+  abortRecurringProposal(
+    proposalAddress: PublicKey,
     safeAddress: PublicKey
   ): Promise<TransactionSignature>;
 
-  executeMultisigFlow(
-    flowAddress: PublicKey,
-    flowActions: any[],
+  executeProposal(
+    proposalAddress: PublicKey,
+    proposalActions: SerializableAction[],
     safeAddress: PublicKey
   ): Promise<TransactionSignature>;
 
-  createAddOwnerInstruction(
+  createAddOwnerProposalInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
   ): Promise<TransactionInstruction>;
 
-  createRemoveOwnerInstruction(
+  createRemoveOwnerProposalInstruction(
     safeAddress: PublicKey,
     safeOwner: PublicKey
   ): Promise<TransactionInstruction>;
 
-  createChangeThresholdInstruction(
+  createChangeThresholdProposalInstruction(
     safeAddress: PublicKey,
     threshold: number
   ): Promise<TransactionInstruction>;

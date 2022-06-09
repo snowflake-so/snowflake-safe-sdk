@@ -1,7 +1,6 @@
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { ErrorMessage } from "../config";
+import { TransactionInstruction } from "@solana/web3.js";
 import { RECURRING_FOREVER } from "../config/job-constants";
-import { FeeSource, MultisigJob, TriggerType, UnixTimeStamp } from "../models";
+import { MultisigJob, TriggerType, UnixTimeStamp } from "../models";
 
 export class MultisigJobBuilder {
   private job: MultisigJob = new MultisigJob();
@@ -51,26 +50,6 @@ export class MultisigJobBuilder {
   scheduleConditional(numberOfExecutions: number): MultisigJobBuilder {
     this.job.triggerType = TriggerType.ProgramCondition;
     this.job.remainingRuns = numberOfExecutions;
-    return this;
-  }
-
-  selfFunded(isSelfFunded: boolean): MultisigJobBuilder {
-    this.job.payFeeFrom = isSelfFunded
-      ? FeeSource.FromFlow
-      : FeeSource.FromFeeAccount;
-    return this;
-  }
-
-  initialFund(amount: number): MultisigJobBuilder {
-    if (this.job.payFeeFrom !== FeeSource.FromFlow) {
-      throw new Error(ErrorMessage.JobNotBuiltAsSelfFunded);
-    }
-    this.job.initialFund = amount;
-    return this;
-  }
-
-  byAppId(appId: PublicKey): MultisigJobBuilder {
-    this.job.appId = appId;
     return this;
   }
 

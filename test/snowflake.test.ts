@@ -6,10 +6,10 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from "@solana/web3.js";
+import { RECURRING_FOREVER } from "../src/config";
 import { MultisigJobBuilder } from "../src/builders/mutisig-job-builder";
 import { DEFAULT_FLOW_SIZE } from "../src/config/job-config";
 import {
-  MultisigJob,
   ProposalStateType,
   SerializableAction,
   TriggerType,
@@ -21,29 +21,32 @@ let provider: AnchorProvider;
 let snowflakeSafe: SnowflakeSafe;
 let owner: PublicKey;
 
-let testJobs: MultisigJob[] = [];
 let safeKeypair: Keypair = Keypair.generate();
 let safeAddress: PublicKey = safeKeypair.publicKey;
 
 jest.setTimeout(60 * 1000);
 
-const createFlow = async (
-  ixs: TransactionInstruction[],
-  newFlowKeypair: Keypair
-) => {
-  const job = new MultisigJobBuilder()
-    .jobInstructions(ixs)
-    .jobName("hello world")
-    .build();
-
-  const txId = await snowflakeSafe.createFlow(
+const createFlow = async (ixs: TransactionInstruction[]) => {
+  const response = await snowflakeSafe.createProposal(
     safeAddress,
-    DEFAULT_FLOW_SIZE,
-    registerTestJob(job),
-    newFlowKeypair,
-    []
+    "hello world",
+    ixs
   );
-  console.log("create new flow txn signature ", txId);
+  return response;
+};
+
+const createRecurringFlow = async (ixs: TransactionInstruction[]) => {
+  const proposal = new MultisigJobBuilder()
+    .jobName("hello world")
+    .jobInstructions(ixs)
+    .scheduleCron("0 0 * * *")
+    .build();
+  const response = await snowflakeSafe.createRecurringProposal(
+    safeAddress,
+    proposal
+  );
+
+  return response;
 };
 
 beforeAll(() => {
@@ -72,11 +75,10 @@ test("create safe", async function () {
   expect(fetchedSafe.owners.length).toBe(input.owners.length);
 });
 
-test("create multisig flow", async function () {
-  const newFlowKeypair = Keypair.generate();
-  await createFlow(instructions, newFlowKeypair);
+test("create proposal", async function () {
+  const [newProposalAddress] = await createFlow(instructions);
 
-  let flow = await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
+  let flow = await snowflakeSafe.fetchJob(newProposalAddress);
 
   expect(flow.proposalStage).toBe(ProposalStateType.Approved);
   expect(flow.safe.toString()).toBe(safeAddress.toString());
@@ -85,32 +87,44 @@ test("create multisig flow", async function () {
   expect(flow.instructions.length).toBe(1);
 });
 
+test("create recurring proposal", async function () {
+  const [newProposalAddress] = await createRecurringFlow(instructions);
+
+  let flow = await snowflakeSafe.fetchJob(newProposalAddress);
+
+  expect(flow.proposalStage).toBe(ProposalStateType.Approved);
+  expect(flow.safe.toString()).toBe(safeAddress.toString());
+  expect(flow.approvals.length).toBe(1);
+  expect(flow.triggerType).toBe(TriggerType.Time);
+  expect(flow.instructions.length).toBe(1);
+  expect(flow.recurring).toBe(true);
+  expect(flow.remainingRuns).toBe(RECURRING_FOREVER);
+  expect(flow.cron).toBe("0 0 * * *");
+});
+
 let newOwner = Keypair.generate().publicKey;
 
 test("add owner", async function () {
-  const newFlowKeypair = Keypair.generate();
-
-  const ix = await snowflakeSafe.createAddOwnerInstruction(
+  const ix = await snowflakeSafe.createAddOwnerProposalInstruction(
     safeAddress,
     newOwner
   );
 
-  await createFlow([ix], newFlowKeypair);
+  const [newProposalAddress] = await createFlow([ix]);
 
-  let flow = await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
+  let flow = await snowflakeSafe.fetchJob(newProposalAddress);
 
   expect(flow.proposalStage).toBe(ProposalStateType.Approved);
   expect(flow.safe.toString()).toBe(safeAddress.toString());
   expect(flow.approvals.length).toBe(1);
   expect(flow.triggerType).toBe(TriggerType.None);
   expect(flow.instructions.length).toBe(1);
-
   const actions = flow.instructions.map((ix: TransactionInstruction) =>
     SerializableAction.fromInstruction(ix)
   );
 
-  const tx = await snowflakeSafe.executeMultisigFlow(
-    newFlowKeypair.publicKey,
+  const tx = await snowflakeSafe.executeProposal(
+    newProposalAddress,
     actions,
     safeAddress
   );
@@ -126,15 +140,13 @@ test("add owner", async function () {
 });
 
 test("remove owner", async function () {
-  const newFlowKeypair = Keypair.generate();
-
-  const ix = await snowflakeSafe.createRemoveOwnerInstruction(
+  const ix = await snowflakeSafe.createRemoveOwnerProposalInstruction(
     safeAddress,
     newOwner
   );
-  await createFlow([ix], newFlowKeypair);
+  const [newProposalAddress] = await createFlow([ix]);
 
-  let flow = await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
+  let flow = await snowflakeSafe.fetchJob(newProposalAddress);
 
   expect(flow.proposalStage).toBe(ProposalStateType.Approved);
   expect(flow.safe.toString()).toBe(safeAddress.toString());
@@ -146,8 +158,8 @@ test("remove owner", async function () {
     SerializableAction.fromInstruction(ix)
   );
 
-  const tx = await snowflakeSafe.executeMultisigFlow(
-    newFlowKeypair.publicKey,
+  const tx = await snowflakeSafe.executeProposal(
+    newProposalAddress,
     actions,
     safeAddress
   );
@@ -164,7 +176,7 @@ test("remove owner", async function () {
   expect(safe.ownerSetSeqno).toBe(2);
 });
 
-test("approve flow", async function () {
+test("approve proposal", async function () {
   const newFlowKeypair = Keypair.generate();
   const job = new MultisigJobBuilder()
     .jobInstructions([])
@@ -197,7 +209,7 @@ test("approve flow", async function () {
   expect(flow.approvals[0].isApproved).toBe(true);
 });
 
-test("reject flow", async function () {
+test("reject proposal", async function () {
   const newFlowKeypair = Keypair.generate();
   const job = new MultisigJobBuilder()
     .jobInstructions([])
@@ -230,15 +242,13 @@ test("reject flow", async function () {
   expect(flow.approvals[0].isApproved).toBe(false);
 });
 
-test("execute flow", async function () {
-  const newFlowKeypair = Keypair.generate();
+test("execute proposal", async function () {
+  const [newProposalAddress] = await createFlow(instructions);
 
-  await createFlow(instructions, newFlowKeypair);
+  let flow = await snowflakeSafe.fetchJob(newProposalAddress);
 
-  let flow = await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
-
-  const tx = await snowflakeSafe.executeMultisigFlow(
-    newFlowKeypair.publicKey,
+  const tx = await snowflakeSafe.executeProposal(
+    newProposalAddress,
     flow.instructions.map((ix: any) => SerializableAction.fromInstruction(ix)),
     safeAddress
   );
@@ -246,24 +256,18 @@ test("execute flow", async function () {
   console.log("execute flow txn signature ", tx);
 });
 
-test("delete flow", async function () {
-  const newFlowKeypair = Keypair.generate();
-  await createFlow(instructions, newFlowKeypair);
+test("delete proposal", async function () {
+  const [newProposalAddress] = await createFlow(instructions);
 
-  const txId = await snowflakeSafe.deleteFlow(newFlowKeypair.publicKey);
+  const txId = await snowflakeSafe.deleteProposal(newProposalAddress);
 
   console.log("delete flow txn signature ", txId);
 
   try {
-    await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
+    await snowflakeSafe.fetchJob(newProposalAddress);
   } catch (error: any) {
     expect(error.message).toBe(
-      `Account does not exist ${newFlowKeypair.publicKey.toString()}`
+      `Account does not exist ${newProposalAddress.toString()}`
     );
   }
 });
-
-function registerTestJob(job: MultisigJob) {
-  testJobs.push(job);
-  return job;
-}

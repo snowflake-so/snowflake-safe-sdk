@@ -39,7 +39,7 @@ The `API_URL` is the endpoint to the Solana cluster. Empty API_URL is pointed to
 - Devnet: `https://api.devnet.solana.com`
 
 ```typescript
-let snowflake: SnowflakeSafe = new SnowflakeSafe(provider);
+let snowflakeSafe: SnowflakeSafe = new SnowflakeSafe(provider);
 ```
 
 ### Create a new safe

@@ -60,10 +60,25 @@ const txId = await snowflakeSafe.createSafe(
 ### Create a new proposal
 Create a new proposal that can be executed by any safe owners
 ```typescript
+const response = await snowflakeSafe.createProposal(
+  safeAddress,
+  "hello world",
+  instructions
+);
 ```
 ### Create a new recurring proposal
 Create a new recurring proposal that can be executed automatically by Snowflake node operators
 ```typescript
+const proposal = new MultisigJobBuilder()
+  .jobName("hello world")
+  .jobInstructions(instructions)
+  .scheduleCron("0 0 * * *")
+  .build();
+  
+const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
+  safeAddress,
+  proposal
+);
 ```
 
 ### Update an existing safe

@@ -434,6 +434,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
   }
 
   async fetchSafe(safeAddress: PublicKey): Promise<SafeType> {
+    console.log(this.finder);
     return this.finder.findSafe(safeAddress);
   }
 

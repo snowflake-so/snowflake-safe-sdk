@@ -147,8 +147,6 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleOnce(tomorrow())
   .build();
-
-await snowflake.createJob(job);
 ```
 
 ### Build a recurring scheduled job
@@ -161,8 +159,6 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleCron("* * * * *", 10)
   .build();
-
-await snowflake.createJob(job);
 ```
 
 Schedule a job that runs at 10:00 AM on the first day of every month .
@@ -173,8 +169,6 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleCron("0 10 1 * *")
   .build();
-
-await snowflake.createJob(job);
 ```
 
 ### Build a program condition triggered job
@@ -187,6 +181,4 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleConditional(1)
   .build();
-
-await snowflake.createJob(job);
 ```

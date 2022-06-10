@@ -17,7 +17,7 @@ import {
 } from "../src/models";
 import { SnowflakeSafe } from "../src/services/snowflake-safe";
 import { instructions, testWallet } from "./test-data";
-import { initAnchorProvider } from "../src/utils/snowflake";
+import { initAnchorProvider } from "../src/utils";
 
 let provider: AnchorProvider;
 let snowflakeSafe: SnowflakeSafe;
@@ -97,7 +97,7 @@ describe("create", () => {
   test("create proposal", async function () {
     const [newProposalAddress] = await createFlow(instructions);
 
-    let flow = await snowflakeSafe.fetchJob(newProposalAddress);
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
 
     expect(flow.proposalStage).toBe(ProposalStateType.Approved);
     expect(flow.safe.toString()).toBe(safeAddress.toString());
@@ -109,7 +109,7 @@ describe("create", () => {
   test("create recurring proposal", async function () {
     const [newProposalAddress] = await createRecurringFlow(instructions);
 
-    let flow = await snowflakeSafe.fetchJob(newProposalAddress);
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
 
     expect(flow.proposalStage).toBe(ProposalStateType.Approved);
     expect(flow.safe.toString()).toBe(safeAddress.toString());
@@ -133,7 +133,7 @@ describe("update proposal", () => {
 
     const [newProposalAddress] = await createFlow([ix]);
 
-    let flow = await snowflakeSafe.fetchJob(newProposalAddress);
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
 
     expect(flow.proposalStage).toBe(ProposalStateType.Approved);
     expect(flow.safe.toString()).toBe(safeAddress.toString());
@@ -144,11 +144,7 @@ describe("update proposal", () => {
       SerializableAction.fromInstruction(ix)
     );
 
-    const tx = await snowflakeSafe.executeProposal(
-      newProposalAddress,
-      actions,
-      safeAddress
-    );
+    const tx = await snowflakeSafe.executeProposal(newProposalAddress, actions);
 
     let safe = await snowflakeSafe.fetchSafe(safeAddress);
 
@@ -167,7 +163,7 @@ describe("update proposal", () => {
     );
     const [newProposalAddress] = await createFlow([ix]);
 
-    let flow = await snowflakeSafe.fetchJob(newProposalAddress);
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
 
     expect(flow.proposalStage).toBe(ProposalStateType.Approved);
     expect(flow.safe.toString()).toBe(safeAddress.toString());
@@ -179,11 +175,7 @@ describe("update proposal", () => {
       SerializableAction.fromInstruction(ix)
     );
 
-    const tx = await snowflakeSafe.executeProposal(
-      newProposalAddress,
-      actions,
-      safeAddress
-    );
+    const tx = await snowflakeSafe.executeProposal(newProposalAddress, actions);
 
     let safe = await snowflakeSafe.fetchSafe(safeAddress);
 
@@ -223,13 +215,10 @@ describe("proposal confirmation", () => {
       signers: [newFlowKeypair],
     });
 
-    const tx = await snowflakeSafe.approveProposal(
-      safeAddress,
-      newFlowKeypair.publicKey
-    );
+    const tx = await snowflakeSafe.approveProposal(newFlowKeypair.publicKey);
     console.log("approve flow txn signature ", tx);
 
-    let flow = await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
+    let flow = await snowflakeSafe.fetchProposal(newFlowKeypair.publicKey);
 
     expect(flow.approvals[0].owner.toString()).toBe(owner.toString());
     expect(flow.approvals[0].isApproved).toBe(true);
@@ -257,13 +246,10 @@ describe("proposal confirmation", () => {
       signers: [newFlowKeypair],
     });
 
-    const tx = await snowflakeSafe.rejectProposal(
-      safeAddress,
-      newFlowKeypair.publicKey
-    );
+    const tx = await snowflakeSafe.rejectProposal(newFlowKeypair.publicKey);
     console.log("approve flow txn signature ", tx);
 
-    let flow = await snowflakeSafe.fetchJob(newFlowKeypair.publicKey);
+    let flow = await snowflakeSafe.fetchProposal(newFlowKeypair.publicKey);
 
     expect(flow.approvals[0].owner.toString()).toBe(owner.toString());
     expect(flow.approvals[0].isApproved).toBe(false);
@@ -273,12 +259,11 @@ describe("proposal confirmation", () => {
 test("execute proposal", async function () {
   const [newProposalAddress] = await createFlow(instructions);
 
-  let flow = await snowflakeSafe.fetchJob(newProposalAddress);
+  let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
 
   const tx = await snowflakeSafe.executeProposal(
     newProposalAddress,
-    flow.instructions.map((ix: any) => SerializableAction.fromInstruction(ix)),
-    safeAddress
+    flow.instructions.map((ix: any) => SerializableAction.fromInstruction(ix))
   );
 
   console.log("execute flow txn signature ", tx);
@@ -292,7 +277,7 @@ test("delete proposal", async function () {
   console.log("delete flow txn signature ", txId);
 
   try {
-    await snowflakeSafe.fetchJob(newProposalAddress);
+    await snowflakeSafe.fetchProposal(newProposalAddress);
   } catch (error: any) {
     expect(error.message).toBe(
       `Account does not exist ${newProposalAddress.toString()}`

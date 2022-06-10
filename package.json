@@ -1,16 +1,31 @@
 {
-  "name": "snowflake-safe-apps-provider",
+  "name": "@snowflake-so/safe-sdk",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Snowflake Safe SDK - Interact with multisig wallets on Snowflake Safe",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p src",
     "watch": "tsc -w -p src",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
+    "prepublish": "tsc -p src",
     "test": "jest"
   },
-  "keywords": [],
-  "author": "",
+  "files": [
+    "/dist"
+  ],
+  "keywords": [
+    "solana",
+    "multisig",
+    "automation",
+    "sdk",
+    "cron"
+  ],
+  "author": "team@snowflake.so",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/snowflake-so/"
+  },
   "license": "ISC",
   "dependencies": {
     "@project-serum/anchor": "^0.24.2",
@@ -23,6 +38,7 @@
     "@types/bn.js": "^5.1.0",
     "@types/jest": "^27.5.2",
     "@types/mocha": "^9.1.0",
+    "@types/node-fetch": "^2.6.1",
     "dotenv": "^16.0.0",
     "jest": "^27.5.1",
     "ts-jest": "^27.1.3",

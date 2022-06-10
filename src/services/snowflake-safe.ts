@@ -218,15 +218,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * Note: Only safe owners can approve a proposal.
    *
    * ### Parameters
-   * @param safeAddress Public key of the safe
    * @param flowAddress Public key of the flow
    * @returns A transaction signature
    */
   async approveProposal(
-    safeAddress: PublicKey,
     proposalAddress: PublicKey
   ): Promise<TransactionSignature> {
     const instructions = [];
+    const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
     const approveProposalInstruction =
       await this.instructionBuilder.buildApproveProposalInstruction(
         safeAddress,
@@ -250,15 +249,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * Note: Only safe owners can reject a proposal.
    *
    * ### Parameters
-   * @param safeAddress Public key of the safe
    * @param proposalAddress Public key of the proposal
    * @returns A transaction signature
    */
   async rejectProposal(
-    safeAddress: PublicKey,
     proposalAddress: PublicKey
   ): Promise<TransactionSignature> {
     const instructions = [];
+    const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
     const approveProposalInstruction =
       await this.instructionBuilder.buildRejectProposalInstruction(
         safeAddress,
@@ -283,15 +281,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * - Only safe owners can abort a proposal.
    *
    * ### Parameters
-   * @param safeAddress Public key of the safe
    * @param proposalAddress Public key of the proposal
    * @returns A transaction signature
    */
   async abortRecurringProposal(
-    proposalAddress: PublicKey,
-    safeAddress: PublicKey
+    proposalAddress: PublicKey
   ): Promise<TransactionSignature> {
     let instructions = [];
+    const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
     const abortFlowIx = await this.instructionBuilder.buildAbortFlowInstruction(
       proposalAddress,
       safeAddress,
@@ -316,16 +313,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * ### Parameters
    * @param proposalAddress Public key of the proposal
    * @param proposalActions List of actions executed after confirmation
-   * @param safeAddress Public key of the safe
    * @returns A transaction signature
    */
   async executeProposal(
     proposalAddress: PublicKey,
-    proposalActions: any[],
-    safeAddress: PublicKey
+    proposalActions: any[]
   ): Promise<TransactionSignature> {
     let instructions = [];
-
+    const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
     const [safeSignerAddress] = await this.findSafeSignerAddress(
       safeAddress,
       this.program.programId
@@ -434,15 +429,20 @@ export class SnowflakeSafe implements ISnowflakeSafe {
   }
 
   async fetchSafe(safeAddress: PublicKey): Promise<SafeType> {
-    console.log(this.finder);
     return this.finder.findSafe(safeAddress);
   }
 
-  async fetchJob(jobAddress: PublicKey): Promise<MultisigJob> {
-    return this.finder.findJob(jobAddress);
+  async fetchProposal(proposalAddress: PublicKey): Promise<MultisigJob> {
+    return this.finder.findJob(proposalAddress);
   }
 
-  async fetchAllJobs(safeAddress: PublicKey): Promise<MultisigJob[]> {
+  async fetchDerivedSafeAddress(
+    proposalAddress: PublicKey
+  ): Promise<PublicKey> {
+    return this.finder.findSafeAddressDerivedFromJob(proposalAddress);
+  }
+
+  async fetchAllProposals(safeAddress: PublicKey): Promise<MultisigJob[]> {
     return this.finder.findJobsOfSafe(safeAddress);
   }
 

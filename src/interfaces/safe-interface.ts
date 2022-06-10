@@ -29,25 +29,17 @@ export interface ISnowflakeSafe {
 
   deleteProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
-  approveProposal(
-    safeAddress: PublicKey,
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature>;
+  approveProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
-  rejectProposal(
-    safeAddress: PublicKey,
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature>;
+  rejectProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
   abortRecurringProposal(
-    proposalAddress: PublicKey,
-    safeAddress: PublicKey
+    proposalAddress: PublicKey
   ): Promise<TransactionSignature>;
 
   executeProposal(
     proposalAddress: PublicKey,
-    proposalActions: SerializableAction[],
-    safeAddress: PublicKey
+    proposalActions: SerializableAction[]
   ): Promise<TransactionSignature>;
 
   createAddOwnerProposalInstruction(

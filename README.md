@@ -39,7 +39,7 @@ The `API_URL` is the endpoint to the Solana cluster. Empty API_URL is pointed to
 - Devnet: `https://api.devnet.solana.com`
 
 ```typescript
-let snowflake: SnowflakeSafe = new SnowflakeSafe(provider);
+let snowflakeSafe: SnowflakeSafe = new SnowflakeSafe(provider);
 ```
 
 ### Create a new safe
@@ -60,10 +60,25 @@ const txId = await snowflakeSafe.createSafe(
 ### Create a new proposal
 Create a new proposal that can be executed by any safe owners
 ```typescript
+const response = await snowflakeSafe.createProposal(
+  safeAddress,
+  "hello world",
+  instructions
+);
 ```
 ### Create a new recurring proposal
 Create a new recurring proposal that can be executed automatically by Snowflake node operators
 ```typescript
+const proposal = new MultisigJobBuilder()
+  .jobName("hello world")
+  .jobInstructions(instructions)
+  .scheduleCron("0 0 * * *")
+  .build();
+  
+const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
+  safeAddress,
+  proposal
+);
 ```
 
 ### Update an existing safe
@@ -94,7 +109,7 @@ The method will create a new instruction to propose changing threshold of the sa
 ```typescript
 const ix = await snowflakeSafe.createChangeThresholdProposalInstruction(
   safeAddress,
-  newOwner
+  newThreshold
 );
 ```
 
@@ -132,8 +147,6 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleOnce(tomorrow())
   .build();
-
-await snowflake.createJob(job);
 ```
 
 ### Build a recurring scheduled job
@@ -146,8 +159,6 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleCron("* * * * *", 10)
   .build();
-
-await snowflake.createJob(job);
 ```
 
 Schedule a job that runs at 10:00 AM on the first day of every month .
@@ -158,8 +169,6 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleCron("0 10 1 * *")
   .build();
-
-await snowflake.createJob(job);
 ```
 
 ### Build a program condition triggered job
@@ -172,6 +181,4 @@ const job = new MultisigJobBuilder()
   .jobInstructions(instructions)
   .scheduleConditional(1)
   .build();
-
-await snowflake.createJob(job);
 ```

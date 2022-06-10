@@ -109,7 +109,7 @@ The method will create a new instruction to propose changing threshold of the sa
 ```typescript
 const ix = await snowflakeSafe.createChangeThresholdProposalInstruction(
   safeAddress,
-  newOwner
+  newThreshold
 );
 ```
 

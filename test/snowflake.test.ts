@@ -23,10 +23,9 @@ let provider: AnchorProvider;
 let snowflakeSafe: SnowflakeSafe;
 let owner: PublicKey;
 
-let safeKeypair: Keypair = Keypair.generate();
-let safeAddress: PublicKey = safeKeypair.publicKey;
-
 jest.setTimeout(60 * 1000);
+
+let safeAddress: PublicKey;
 
 const createFlow = async (ixs: TransactionInstruction[]) => {
   const response = await snowflakeSafe.createProposal(
@@ -80,14 +79,14 @@ describe("create", () => {
       approvalsRequired: 1,
       owners: [owner],
     };
-    const txId = await snowflakeSafe.createSafe(
-      safeKeypair,
+    const [address, txId] = await snowflakeSafe.createSafe(
       input.owners,
       input.approvalsRequired
     );
+    safeAddress = address;
     console.log("create safe txn signature ", txId);
     let fetchedSafe: any = await snowflakeSafe.program.account.safe.fetch(
-      safeKeypair.publicKey
+      safeAddress
     );
     expect(fetchedSafe.creator.toString()).toBe(owner.toString());
     expect(fetchedSafe.ownerSetSeqno).toBe(0);

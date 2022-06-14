@@ -8,10 +8,9 @@ import { MultisigJob, SerializableAction } from "src/models";
 
 export interface ISnowflakeSafe {
   createSafe(
-    safeKeypair: Keypair,
     owners: PublicKey[],
     approvalsRequired: number
-  ): Promise<TransactionSignature>;
+  ): Promise<[PublicKey, TransactionSignature]>;
 
   createProposal(
     safeAddress: PublicKey,

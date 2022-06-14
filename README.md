@@ -51,14 +51,16 @@ const input = {
   approvalsRequired: 1,
   owners: [owner],
 };
-const txId = await snowflakeSafe.createSafe(
-  safeKeypair,
+const [newSafeAddress, txId] = await snowflakeSafe.createSafe(
   input.owners,
   input.approvalsRequired
 );
 ```
+
 ### Create a new proposal
+
 Create a new proposal that can be executed by any safe owners
+
 ```typescript
 const response = await snowflakeSafe.createProposal(
   safeAddress,
@@ -66,15 +68,18 @@ const response = await snowflakeSafe.createProposal(
   instructions
 );
 ```
+
 ### Create a new recurring proposal
+
 Create a new recurring proposal that can be executed automatically by Snowflake node operators
+
 ```typescript
 const proposal = new MultisigJobBuilder()
   .jobName("hello world")
   .jobInstructions(instructions)
   .scheduleCron("0 0 * * *")
   .build();
-  
+
 const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
   safeAddress,
   proposal
@@ -88,7 +93,10 @@ const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
 The method will create a new instruction to propose adding new owner to the safe
 
 ```typescript
-const ix = await snowflakeSafe.createAddOwnerProposalInstruction(safeAddress, newOwner);
+const ix = await snowflakeSafe.createAddOwnerProposalInstruction(
+  safeAddress,
+  newOwner
+);
 ```
 
 #### Remove owner proposal

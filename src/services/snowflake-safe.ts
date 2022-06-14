@@ -58,23 +58,23 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param safeKeypair A generated keypair for the safe
    * @param owners An array of public keys for owners of the safe
    * @param approvalsRequired The number of owners required to approve a proposal
-   * @returns A transaction signature
+   * @returns Safe address and a transaction signature
    */
   async createSafe(
-    safeKeypair: Keypair,
     owners: PublicKey[],
     approvalsRequired: number
-  ): Promise<TransactionSignature> {
+  ): Promise<[PublicKey, TransactionSignature]> {
+    let newSafeKeypair = Keypair.generate();
     this.validateCreateSafe(owners, approvalsRequired);
 
     const instructions = [];
     const [, safeSignerNonce] = await this.findSafeSignerAddress(
-      safeKeypair.publicKey,
+      newSafeKeypair.publicKey,
       this.program.programId
     );
     const ix = this.instructionBuilder.buildCreateSafeInstruction(
       this.wallet,
-      safeKeypair.publicKey,
+      newSafeKeypair.publicKey,
       safeSignerNonce,
       owners,
       approvalsRequired
@@ -84,10 +84,10 @@ export class SnowflakeSafe implements ISnowflakeSafe {
 
     const tx = await this.transactionSender.sendWithWallet({
       instructions,
-      signers: [safeKeypair],
+      signers: [newSafeKeypair],
     });
 
-    return tx;
+    return [newSafeKeypair.publicKey, tx];
   }
 
   private buildProposal(

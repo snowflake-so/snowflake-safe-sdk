@@ -7,13 +7,13 @@ Snowflake Safe SDK provides an easy way to interact with the Snowflake Safe app 
 Install with npm
 
 ```bash
-npm i @snowflake-so/snowflake-safe-sdk
+npm i @snowflake-so/safe-sdk
 ```
 
 Install with yarn
 
 ```bash
-yarn add @snowflake-so/snowflake-safe-sdk
+yarn add @snowflake-so/safe-sdk
 ```
 
 ## Quick start guide

@@ -15,7 +15,7 @@ import { InstructionBuilder } from "../builders/instruction-builder";
 import { SNOWFLAKE_SAFE_IDL } from "../idl";
 import { ISnowflakeSafe } from "../interfaces/safe-interface";
 import { TransactionSender } from "./transaction-sender";
-import { MultisigJob, SafeType } from "../models";
+import { MultisigJob, SafeType, SerializableAction } from "../models";
 import { DEFAULT_FLOW_SIZE, ErrorMessage } from "../config";
 import { MultisigJobBuilder } from "../builders";
 
@@ -124,14 +124,16 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     proposalName: string,
     proposalInstructions: TransactionInstruction[],
     setupInstructions?: TransactionInstruction[],
-    accountSize: number = DEFAULT_FLOW_SIZE
+    accountSize: number = DEFAULT_FLOW_SIZE,
+    isApproved: boolean = true
   ): Promise<[PublicKey, TransactionSignature]> {
     const proposal = this.buildProposal(proposalName, proposalInstructions);
     return this.createRecurringProposal(
       safeAddress,
       proposal,
       setupInstructions,
-      accountSize
+      accountSize,
+      isApproved
     );
   }
 
@@ -150,7 +152,8 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     safeAddress: PublicKey,
     proposal: MultisigJob,
     setupInstructions?: TransactionInstruction[],
-    accountSize: number = DEFAULT_FLOW_SIZE
+    accountSize: number = DEFAULT_FLOW_SIZE,
+    isApproved: boolean = true
   ): Promise<[PublicKey, TransactionSignature]> {
     let newProposalKeypair = Keypair.generate();
     proposal.validateForCreate();
@@ -174,7 +177,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     const instructions = [
       ...(setupInstructions ? setupInstructions : []),
       createFlowIx,
-      approveProposalIx,
+      ...(isApproved ? [approveProposalIx] : []),
     ];
     const tx = await this.transactionSender.sendWithWallet({
       instructions,
@@ -423,6 +426,25 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       safeSignerAddress,
       safeAddress,
       threshold
+    );
+
+    return ix;
+  }
+
+  /** ## Create add proposal action instruction
+   * Note: Add new action to the proposal
+   * @param proposalAddress Public key of the proposal
+   * @param proposalAction Proposal action
+   * @returns
+   */
+  async createAddProposalActionInstruction(
+    proposalAddress: PublicKey,
+    proposalAction: SerializableAction
+  ): Promise<TransactionInstruction> {
+    const ix = await this.instructionBuilder.buildAddFlowActionInstruction(
+      proposalAddress,
+      proposalAction,
+      this.wallet
     );
 
     return ix;

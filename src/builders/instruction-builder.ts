@@ -8,6 +8,7 @@ import {
 import { Program, AnchorProvider } from "@project-serum/anchor";
 import { MultisigJob } from "../models/multisig-job";
 import BN from "bn.js";
+import { SerializableAction } from "src/models";
 
 export class InstructionBuilder {
   program: Program;
@@ -231,6 +232,22 @@ export class InstructionBuilder {
 
     const abortFlowIx = this.program.instruction.abortFlow(ctx);
     return abortFlowIx;
+  }
+
+  buildAddFlowActionInstruction(
+    flowAddress: PublicKey,
+    flowAction: SerializableAction,
+    requestedByAddress: PublicKey
+  ): TransactionInstruction {
+    let ctx = {
+      accounts: {
+        flow: flowAddress,
+        requestedBy: requestedByAddress,
+      },
+      signers: [],
+    };
+    const addFlowActionIx = this.program.instruction.addAction(flowAction, ctx);
+    return addFlowActionIx;
   }
 
   buildExecuteMultisigFlowInstruction(

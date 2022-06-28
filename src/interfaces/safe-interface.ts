@@ -17,13 +17,16 @@ export interface ISnowflakeSafe {
     proposalName: string,
     proposalInstructions: TransactionInstruction[],
     setupInstructions?: TransactionInstruction[],
-    accountSize?: number
+    accountSize?: number,
+    isApproved?: boolean
   ): Promise<[PublicKey, TransactionSignature]>;
 
   createRecurringProposal(
     safeAddress: PublicKey,
     proposal: MultisigJob,
-    setupInstructions?: TransactionInstruction[]
+    setupInstructions?: TransactionInstruction[],
+    accountSize?: number,
+    isApproved?: boolean
   ): Promise<[PublicKey, TransactionSignature]>;
 
   deleteProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
@@ -54,5 +57,10 @@ export interface ISnowflakeSafe {
   createChangeThresholdProposalInstruction(
     safeAddress: PublicKey,
     threshold: number
+  ): Promise<TransactionInstruction>;
+
+  createAddOwnerProposalInstruction(
+    safeAddress: PublicKey,
+    safeOwner: PublicKey
   ): Promise<TransactionInstruction>;
 }

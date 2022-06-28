@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { UnixTimeStamp } from "src/models";
+import { UnixTimeStamp } from "../src/models";
 
 export const testWallet = Keypair.fromSecretKey(
   new Uint8Array([
@@ -24,6 +24,10 @@ export const instructions = [
     ],
   },
 ];
+
+export const testSafe = new PublicKey(
+  "3M8DzUFD6os5uSyu7f8Gf9DdGQke7YPvQU7obBcXgQ35"
+);
 
 export function tomorrow(): UnixTimeStamp {
   let tomorrow = new Date();

@@ -13,5 +13,6 @@
     "strictPropertyInitialization": false,
     "resolveJsonModule": true
   },
+  "lib": ["es2019"],
   "include": ["src"]
 }

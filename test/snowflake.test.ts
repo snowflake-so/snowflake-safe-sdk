@@ -204,6 +204,7 @@ describe("proposal confirmation", () => {
         owner,
         DEFAULT_FLOW_SIZE,
         job,
+        false,
         safeAddress,
         newFlowKeypair,
         SystemProgram.programId
@@ -235,6 +236,7 @@ describe("proposal confirmation", () => {
         owner,
         DEFAULT_FLOW_SIZE,
         job,
+        false,
         safeAddress,
         newFlowKeypair,
         SystemProgram.programId

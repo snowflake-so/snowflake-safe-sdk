@@ -18,6 +18,7 @@ import { TransactionSender } from "./transaction-sender";
 import { MultisigJob, SafeType, SerializableAction } from "../models";
 import { DEFAULT_FLOW_SIZE, ErrorMessage } from "../config";
 import { MultisigJobBuilder } from "../builders";
+import { toLamportsByDecimal } from "../utils/lamports";
 
 export class SnowflakeSafe implements ISnowflakeSafe {
   program: Program;
@@ -55,7 +56,6 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     );
    * ```
    * ### Parameters
-   * @param safeKeypair A generated keypair for the safe
    * @param owners An array of public keys for owners of the safe
    * @param approvalsRequired The number of owners required to approve a proposal
    * @returns Safe address and a transaction signature
@@ -68,19 +68,30 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     this.validateCreateSafe(owners, approvalsRequired);
 
     const instructions = [];
-    const [, safeSignerNonce] = await this.findSafeSignerAddress(
-      newSafeKeypair.publicKey,
-      this.program.programId
-    );
+    const [safeSignerAddress, safeSignerNonce] =
+      await this.findSafeSignerAddress(
+        newSafeKeypair.publicKey,
+        this.program.programId
+      );
     const ix = this.instructionBuilder.buildCreateSafeInstruction(
       this.wallet,
       newSafeKeypair.publicKey,
+      safeSignerAddress,
       safeSignerNonce,
       owners,
       approvalsRequired
     );
 
     instructions.push(ix);
+
+    const accountInitDepositIx =
+      await this.instructionBuilder.buildNativeTokenTransferIx(
+        this.wallet,
+        safeSignerAddress,
+        toLamportsByDecimal(0.001, 9)
+      );
+
+    instructions.push(accountInitDepositIx);
 
     const tx = await this.transactionSender.sendWithWallet({
       instructions,
@@ -155,6 +166,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     accountSize: number = DEFAULT_FLOW_SIZE,
     isApproved: boolean = true
   ): Promise<[PublicKey, TransactionSignature]> {
+    const isDraft = false;
     let newProposalKeypair = Keypair.generate();
     proposal.validateForCreate();
 
@@ -170,6 +182,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
         this.wallet,
         accountSize,
         proposal,
+        isDraft,
         safeAddress,
         newProposalKeypair,
         SystemProgram.programId

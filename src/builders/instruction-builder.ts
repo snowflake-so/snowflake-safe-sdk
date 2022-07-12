@@ -8,7 +8,7 @@ import {
 import { Program, AnchorProvider } from "@project-serum/anchor";
 import { MultisigJob } from "../models/multisig-job";
 import BN from "bn.js";
-import { SerializableAction } from "src/models";
+import { SerializableAction } from "../models";
 
 export class InstructionBuilder {
   program: Program;
@@ -21,6 +21,7 @@ export class InstructionBuilder {
   buildCreateSafeInstruction(
     payerAddress: PublicKey,
     safeAddress: PublicKey,
+    safeSignerAddress: PublicKey,
     safeSignerNonce: number,
     safeOwners: PublicKey[],
     approvalsRequired: number
@@ -29,6 +30,7 @@ export class InstructionBuilder {
       accounts: {
         payer: payerAddress,
         safe: safeAddress,
+        safeSigner: safeSignerAddress,
         systemProgram: SystemProgram.programId,
       },
       signers: [],
@@ -37,7 +39,7 @@ export class InstructionBuilder {
       approvalsRequired: approvalsRequired,
       creator: payerAddress,
       createdAt: new BN(0),
-      signerNonce: safeSignerNonce,
+      signerBump: safeSignerNonce,
       extra: "",
       owners: safeOwners,
     };
@@ -134,6 +136,7 @@ export class InstructionBuilder {
     requestedByAddress: PublicKey,
     accountSize: number,
     multisigJob: MultisigJob,
+    isDraft: boolean,
     safeAddress: PublicKey,
     newFlowKeypair: Keypair,
     systemProgram: PublicKey
@@ -152,6 +155,7 @@ export class InstructionBuilder {
     const createFlowIx = this.program.instruction.createFlow(
       accountSize,
       serializableJob,
+      isDraft,
       ctx
     );
     multisigJob.safe = safeAddress;
@@ -286,5 +290,20 @@ export class InstructionBuilder {
     const executeMultisigFlowIx =
       this.program.instruction.executeMultisigFlow(ctx);
     return executeMultisigFlowIx;
+  }
+
+  buildNativeTokenTransferIx(
+    fromAddress: PublicKey,
+    toAddress: PublicKey,
+    amount: number
+  ): TransactionInstruction {
+    const transferIx = SystemProgram.transfer({
+      fromPubkey: fromAddress,
+      toPubkey: toAddress,
+      lamports: amount,
+      programId: SystemProgram.programId,
+    });
+
+    return transferIx;
   }
 }

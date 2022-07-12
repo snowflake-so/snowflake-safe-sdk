@@ -1,5 +1,5 @@
 {
-  "version": "0.0.0",
+  "version": "0.1.0",
   "name": "snowflake",
   "instructions": [
     {
@@ -36,6 +36,10 @@
           "type": {
             "defined": "Flow"
           }
+        },
+        {
+          "name": "isDraft",
+          "type": "bool"
         }
       ]
     },
@@ -83,6 +87,11 @@
           "name": "safe",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "safeSigner",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "payer",
@@ -306,6 +315,10 @@
           "type": {
             "defined": "Action"
           }
+        },
+        {
+          "name": "finishDraft",
+          "type": "bool"
         }
       ]
     }
@@ -465,7 +478,7 @@
             "type": "i64"
           },
           {
-            "name": "signerNonce",
+            "name": "signerBump",
             "type": "u8"
           },
           {
@@ -564,86 +577,6 @@
       }
     },
     {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InvalidJobData"
-          },
-          {
-            "name": "InvalidExecutionType"
-          },
-          {
-            "name": "JobIsNotDueForExecution"
-          },
-          {
-            "name": "JobIsExpired"
-          },
-          {
-            "name": "CannotMarkJobAsErrorIfItsWithinSchedule"
-          },
-          {
-            "name": "UserInstructionMustNotReferenceTheNodeOperator"
-          },
-          {
-            "name": "CreatorIsNotAssignedToOwnerList"
-          },
-          {
-            "name": "InvalidMinApprovalsRequired"
-          },
-          {
-            "name": "InvalidMaxApprovalsRequired"
-          },
-          {
-            "name": "InvalidMinOwnerCount"
-          },
-          {
-            "name": "InvalidMaxOwnerCount"
-          },
-          {
-            "name": "InvalidSafe"
-          },
-          {
-            "name": "InvalidOwner"
-          },
-          {
-            "name": "DuplicateOwnerInSafe"
-          },
-          {
-            "name": "OwnerIsNotRemoved"
-          },
-          {
-            "name": "AddressSignedAlready"
-          },
-          {
-            "name": "RequestIsRejected"
-          },
-          {
-            "name": "RequestIsExecutedAlready"
-          },
-          {
-            "name": "RequestIsNotApprovedYet"
-          },
-          {
-            "name": "RequestIsNotExecutedYet"
-          },
-          {
-            "name": "ExceedLimitProposalSignatures"
-          },
-          {
-            "name": "FlowNotEnoughApprovals"
-          },
-          {
-            "name": "FlowMustHaveZeroApproverBeforeUpdate"
-          },
-          {
-            "name": "FlowMustBePendingBeforeUpdate"
-          }
-        ]
-      }
-    },
-    {
       "name": "TriggerType",
       "type": {
         "kind": "enum",
@@ -665,6 +598,9 @@
       "type": {
         "kind": "enum",
         "variants": [
+          {
+            "name": "Draft"
+          },
           {
             "name": "Pending"
           },
@@ -702,6 +638,143 @@
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidJobData",
+      "msg": "SnowflakeSafe: The job data is invalid."
+    },
+    {
+      "code": 6001,
+      "name": "InvalidExecutionType",
+      "msg": "SnowflakeSafe: Invalid execution type for the job."
+    },
+    {
+      "code": 6002,
+      "name": "JobIsNotDueForExecution",
+      "msg": "SnowflakeSafe: The job is not due for execution."
+    },
+    {
+      "code": 6003,
+      "name": "JobIsExpired",
+      "msg": "SnowflakeSafe: The job is expired."
+    },
+    {
+      "code": 6004,
+      "name": "CannotMarkJobAsErrorIfItsWithinSchedule",
+      "msg": "SnowflakeSafe: Unable to mark the time triggered job as error because it is still within schedule."
+    },
+    {
+      "code": 6005,
+      "name": "UserInstructionMustNotReferenceTheNodeOperator",
+      "msg": "SnowflakeSafe: User instruction must not reference the node operator."
+    },
+    {
+      "code": 6006,
+      "name": "CreatorIsNotAssignedToOwnerList",
+      "msg": "SnowflakeSafe: Creator is not assigned to owner list"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidMinApprovalsRequired",
+      "msg": "SnowflakeSafe: At least 1 required approvals"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidMaxApprovalsRequired",
+      "msg": "SnowflakeSafe: Required approvals exceeds the number of owners"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidMinOwnerCount",
+      "msg": "SnowflakeSafe: At least 1 owner."
+    },
+    {
+      "code": 6010,
+      "name": "InvalidMaxOwnerCount",
+      "msg": "SnowflakeSafe: Max owner reached."
+    },
+    {
+      "code": 6011,
+      "name": "InvalidSafe",
+      "msg": "SnowflakeSafe: Invalid Safe."
+    },
+    {
+      "code": 6012,
+      "name": "InvalidOwner",
+      "msg": "SnowflakeSafe: Not an owner."
+    },
+    {
+      "code": 6013,
+      "name": "DuplicateOwnerInSafe",
+      "msg": "SnowflakeSafe: Duplicate owner address in safe."
+    },
+    {
+      "code": 6014,
+      "name": "OwnerIsNotRemoved",
+      "msg": "SnowflakeSafe: Owner is not removed from safe"
+    },
+    {
+      "code": 6015,
+      "name": "AddressSignedAlready",
+      "msg": "SnowflakeSafe: Address signed already"
+    },
+    {
+      "code": 6016,
+      "name": "RequestIsRejected",
+      "msg": "SnowflakeSafe: Request is rejected"
+    },
+    {
+      "code": 6017,
+      "name": "RequestIsExecutedAlready",
+      "msg": "SnowflakeSafe: Request is executed already"
+    },
+    {
+      "code": 6018,
+      "name": "RequestIsNotApprovedYet",
+      "msg": "SnowflakeSafe: Request is not approved yet"
+    },
+    {
+      "code": 6019,
+      "name": "RequestIsNotExecutedYet",
+      "msg": "SnowflakeSafe: Request is not executed yet"
+    },
+    {
+      "code": 6020,
+      "name": "ExceedLimitProposalSignatures",
+      "msg": "SnowflakeSafe: Exceed limit proposal signatures"
+    },
+    {
+      "code": 6021,
+      "name": "FlowNotEnoughApprovals",
+      "msg": "SnowflakeSafe: Flow not enough approvals"
+    },
+    {
+      "code": 6022,
+      "name": "FlowMustHaveZeroApproverBeforeUpdate",
+      "msg": "SnowflakeSafe: Flow must have zero approver before update"
+    },
+    {
+      "code": 6023,
+      "name": "FlowMustBeInDraftedBeforeUpdate",
+      "msg": "SnowflakeSafe: Flow must be in drafted before update"
+    },
+    {
+      "code": 6024,
+      "name": "FlowIsNotReadyYet",
+      "msg": "SnowflakeSafe: Flow is not ready yet"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidUtcOffset",
+      "msg": "SnowflakeSafe: Invalid UTC offset"
+    },
+    {
+      "code": 6026,
+      "name": "InvalidCronPatternForScheduledFlow",
+      "msg": "SnowflakeSafe: Cron pattern cannot be empty for scheduled flow"
     }
   ]
 }

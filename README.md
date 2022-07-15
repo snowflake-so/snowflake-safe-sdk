@@ -190,3 +190,16 @@ const job = new MultisigJobBuilder()
   .scheduleConditional(1)
   .build();
 ```
+
+## Support
+
+### Struggle with the SDK integration?
+
+If you have any problem with using the SDK in your system, drop a question our Snowflake Discord #sdk to receive a support from our engineers.
+
+### Find a bug or want to contribute to Snowflake?
+
+If you find a bug or have any problem and idea while using the SDK, you can create an issue on SDK Github.
+
+License
+MIT

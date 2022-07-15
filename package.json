@@ -1,6 +1,6 @@
 {
   "name": "@snowflake-so/safe-sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Snowflake Safe SDK - Interact with multisig wallets on Snowflake Safe",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,6 +15,7 @@
     "/dist"
   ],
   "keywords": [
+    "Snowflake Safe",
     "solana",
     "multisig",
     "automation",
@@ -24,7 +25,7 @@
   "author": "team@snowflake.so",
   "repository": {
     "type": "git",
-    "url": "https://github.com/snowflake-so/"
+    "url": "https://github.com/snowflake-so/snowflake-safe-sdk"
   },
   "license": "ISC",
   "dependencies": {

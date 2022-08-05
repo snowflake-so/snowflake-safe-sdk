@@ -13,6 +13,10 @@ export class SerializableAction {
   name: string;
   extra: string;
 
+  static fromInstructions(instructions: TransactionInstruction[]) {
+    return instructions.map((ix) => this.fromInstruction(ix));
+  }
+
   static fromInstruction(
     instruction: TransactionInstruction
   ): SerializableAction {

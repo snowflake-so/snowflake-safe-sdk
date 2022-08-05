@@ -139,11 +139,8 @@ describe("update proposal", () => {
     expect(flow.approvals.length).toBe(1);
     expect(flow.triggerType).toBe(TriggerType.None);
     expect(flow.instructions.length).toBe(1);
-    const actions = flow.instructions.map((ix: TransactionInstruction) =>
-      SerializableAction.fromInstruction(ix)
-    );
 
-    const tx = await snowflakeSafe.executeProposal(newProposalAddress, actions);
+    const tx = await snowflakeSafe.executeProposal(newProposalAddress);
 
     let safe = await snowflakeSafe.fetchSafe(safeAddress);
 
@@ -170,17 +167,14 @@ describe("update proposal", () => {
     expect(flow.triggerType).toBe(TriggerType.None);
     expect(flow.instructions.length).toBe(1);
 
-    const actions = flow.instructions.map((ix: TransactionInstruction) =>
-      SerializableAction.fromInstruction(ix)
-    );
-
-    const tx = await snowflakeSafe.executeProposal(newProposalAddress, actions);
+    const tx = await snowflakeSafe.executeProposal(newProposalAddress);
 
     let safe = await snowflakeSafe.fetchSafe(safeAddress);
 
     console.log("execute add owner flow txn signature ", tx);
 
-    expect(flow.proposalStage).toBe(ProposalStateType.Approved);
+    flow = await snowflakeSafe.fetchProposal(newProposalAddress);
+    expect(flow.proposalStage).toBe(ProposalStateType.Complete);
     expect(safe.owners.length).toBe(1);
     expect(
       !safe.owners
@@ -222,6 +216,7 @@ describe("proposal confirmation", () => {
 
     expect(flow.approvals[0].owner.toString()).toBe(owner.toString());
     expect(flow.approvals[0].isApproved).toBe(true);
+    expect(flow.proposalStage).toBe(ProposalStateType.Approved);
   });
 
   test("reject proposal", async function () {
@@ -254,20 +249,41 @@ describe("proposal confirmation", () => {
 
     expect(flow.approvals[0].owner.toString()).toBe(owner.toString());
     expect(flow.approvals[0].isApproved).toBe(false);
+    expect(flow.proposalStage).toBe(ProposalStateType.Rejected);
   });
 });
 
-test("execute proposal", async function () {
-  const [newProposalAddress] = await createFlow(instructions);
+describe("proposal execution", () => {
+  test("abort recurring proposal", async function () {
+    const [newProposalAddress] = await createRecurringFlow(instructions);
+    await snowflakeSafe.executeProposal(newProposalAddress);
 
-  let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
+    const tx = await snowflakeSafe.abortRecurringProposal(newProposalAddress);
+    console.log("abort flow txn signature ", tx);
 
-  const tx = await snowflakeSafe.executeProposal(
-    newProposalAddress,
-    flow.instructions.map((ix: any) => SerializableAction.fromInstruction(ix))
-  );
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
+    expect(flow.proposalStage).toBe(ProposalStateType.Aborted);
+  });
 
-  console.log("execute flow txn signature ", tx);
+  test("execute proposal", async function () {
+    const [newProposalAddress] = await createRecurringFlow(instructions);
+    const tx = await snowflakeSafe.executeProposal(newProposalAddress);
+
+    console.log("execute flow txn signature ", tx);
+
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
+    expect(flow.proposalStage).toBe(ProposalStateType.ExecutionInProgress);
+  });
+
+  test("execute proposal", async function () {
+    const [newProposalAddress] = await createFlow(instructions);
+    const tx = await snowflakeSafe.executeProposal(newProposalAddress);
+
+    console.log("execute flow txn signature ", tx);
+
+    let flow = await snowflakeSafe.fetchProposal(newProposalAddress);
+    expect(flow.proposalStage).toBe(ProposalStateType.Complete);
+  });
 });
 
 test("delete proposal", async function () {

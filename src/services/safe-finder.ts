@@ -32,10 +32,8 @@ export default class SafeFinder {
   async findSafeAddressDerivedFromJob(
     jobAddress: PublicKey
   ): Promise<PublicKey> {
-    const serJob: any = await this.program.account.flow.fetch(jobAddress);
-
-    return (MultisigJob.fromSerializableJob(serJob, jobAddress) as MultisigJob)
-      .safe;
+    const serJob: any = await this.findJob(jobAddress);
+    return serJob.safe;
   }
 
   private getSafeAddressFilter(publicKey: PublicKey): GetProgramAccountsFilter {

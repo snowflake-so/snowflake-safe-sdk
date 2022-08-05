@@ -328,15 +328,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    *
    * ### Parameters
    * @param proposalAddress Public key of the proposal
-   * @param proposalActions List of actions executed after confirmation
    * @returns A transaction signature
    */
   async executeProposal(
-    proposalAddress: PublicKey,
-    proposalActions: any[]
+    proposalAddress: PublicKey
   ): Promise<TransactionSignature> {
     let instructions = [];
-    const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
+    const serJob = await this.fetchProposal(proposalAddress);
+    const safeAddress = serJob.safe;
     const [safeSignerAddress] = await this.findSafeSignerAddress(
       safeAddress,
       this.program.programId
@@ -346,6 +345,10 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       data: Buffer.from("snf_exec_manual", "utf-8"),
       programId: MEMO_PROGRAM_ID,
     });
+
+    const proposalActions = SerializableAction.fromInstructions(
+      serJob.instructions
+    );
 
     const executeMultisigFlowIx =
       await this.instructionBuilder.buildExecuteMultisigFlowInstruction(

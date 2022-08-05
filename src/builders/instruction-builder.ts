@@ -4,11 +4,11 @@ import {
   PublicKey,
   SystemProgram,
   TransactionInstruction,
-} from "@solana/web3.js";
-import { Program, AnchorProvider } from "@project-serum/anchor";
-import { MultisigJob } from "../models/multisig-job";
-import BN from "bn.js";
-import { SerializableAction } from "../models";
+} from '@solana/web3.js';
+import { Program, AnchorProvider } from '@project-serum/anchor';
+import { MultisigJob } from '../models/multisig-job';
+import BN from 'bn.js';
+import { SerializableAction } from '../models';
 
 export class InstructionBuilder {
   program: Program;
@@ -26,7 +26,7 @@ export class InstructionBuilder {
     safeOwners: PublicKey[],
     approvalsRequired: number
   ): TransactionInstruction {
-    let ctx: any = {
+    const ctx: any = {
       accounts: {
         payer: payerAddress,
         safe: safeAddress,
@@ -35,12 +35,12 @@ export class InstructionBuilder {
       },
       signers: [],
     };
-    let safe = {
+    const safe = {
       approvalsRequired: approvalsRequired,
       creator: payerAddress,
       createdAt: new BN(0),
       signerBump: safeSignerNonce,
-      extra: "",
+      extra: '',
       owners: safeOwners,
     };
 
@@ -54,18 +54,14 @@ export class InstructionBuilder {
     safeOwners: PublicKey[],
     approvalsRequired: number
   ): TransactionInstruction {
-    let ctx = {
+    const ctx = {
       accounts: {
         safe: safeAddress,
         caller: payerAddress,
       },
       signers: [],
     };
-    const updateSafeIx = this.program.instruction.updateSafe(
-      safeOwners,
-      approvalsRequired,
-      ctx
-    );
+    const updateSafeIx = this.program.instruction.updateSafe(safeOwners, approvalsRequired, ctx);
     return updateSafeIx;
   }
 
@@ -74,7 +70,7 @@ export class InstructionBuilder {
     safeAddress: PublicKey,
     safeOwner: PublicKey
   ): TransactionInstruction {
-    let ctx = {
+    const ctx = {
       accounts: {
         safe: safeAddress,
         safeSigner: safeSignerAddress,
@@ -92,7 +88,7 @@ export class InstructionBuilder {
     safeAddress: PublicKey,
     safeOwner: PublicKey
   ): TransactionInstruction {
-    let ctx = {
+    const ctx = {
       accounts: {
         safe: safeAddress,
         safeSigner: safeSignerAddress,
@@ -110,7 +106,7 @@ export class InstructionBuilder {
     safeAddress: PublicKey,
     threshold: number
   ): TransactionInstruction {
-    let ctx = {
+    const ctx = {
       accounts: {
         safe: safeAddress,
         safeSigner: safeSignerAddress,
@@ -118,11 +114,8 @@ export class InstructionBuilder {
       signers: [],
     };
 
-    const changeThresholdIx = this.program.instruction.changeThreshold(
-      threshold,
-      ctx
-    );
-    let safeSigner = changeThresholdIx.keys.find((key: any) => {
+    const changeThresholdIx = this.program.instruction.changeThreshold(threshold, ctx);
+    const safeSigner = changeThresholdIx.keys.find((key: any) => {
       return key.pubkey.equals(safeSignerAddress);
     });
     if (safeSigner) {
@@ -142,7 +135,7 @@ export class InstructionBuilder {
     systemProgram: PublicKey
   ): TransactionInstruction {
     const serializableJob = multisigJob.toSerializableJob();
-    let ctx = {
+    const ctx = {
       accounts: {
         flow: newFlowKeypair.publicKey,
         safe: safeAddress,
@@ -163,11 +156,8 @@ export class InstructionBuilder {
     return createFlowIx;
   }
 
-  buildDeleteFlowIx(
-    ownerAddress: PublicKey,
-    flowAddress: PublicKey
-  ): TransactionInstruction {
-    let ctx = {
+  buildDeleteFlowIx(ownerAddress: PublicKey, flowAddress: PublicKey): TransactionInstruction {
+    const ctx = {
       accounts: {
         flow: flowAddress,
         requestedBy: ownerAddress,
@@ -184,7 +174,7 @@ export class InstructionBuilder {
     flowAddress: PublicKey,
     payerAddress: PublicKey
   ) {
-    let ctx = {
+    const ctx = {
       accounts: {
         safe: safeAddress,
         flow: flowAddress,
@@ -193,10 +183,7 @@ export class InstructionBuilder {
       signers: [],
     };
 
-    const approveProposalIx = this.program.instruction.approveProposal(
-      true,
-      ctx
-    );
+    const approveProposalIx = this.program.instruction.approveProposal(true, ctx);
     return approveProposalIx;
   }
 
@@ -205,7 +192,7 @@ export class InstructionBuilder {
     flowAddress: PublicKey,
     payerAddress: PublicKey
   ) {
-    let ctx = {
+    const ctx = {
       accounts: {
         safe: safeAddress,
         flow: flowAddress,
@@ -214,10 +201,7 @@ export class InstructionBuilder {
       signers: [],
     };
 
-    const approveProposalIx = this.program.instruction.approveProposal(
-      false,
-      ctx
-    );
+    const approveProposalIx = this.program.instruction.approveProposal(false, ctx);
     return approveProposalIx;
   }
 
@@ -226,7 +210,7 @@ export class InstructionBuilder {
     safeAddress: PublicKey,
     callerAddress: PublicKey
   ): TransactionInstruction {
-    let ctx = {
+    const ctx = {
       accounts: {
         flow: flowAddress,
         safe: safeAddress,
@@ -243,7 +227,7 @@ export class InstructionBuilder {
     flowAction: SerializableAction,
     requestedByAddress: PublicKey
   ): TransactionInstruction {
-    let ctx = {
+    const ctx = {
       accounts: {
         flow: flowAddress,
         requestedBy: requestedByAddress,
@@ -261,22 +245,19 @@ export class InstructionBuilder {
     ownerAddress: PublicKey,
     flowActions: any
   ): TransactionInstruction {
-    let remainingAccountMetas: AccountMeta[] = flowActions.reduce(
-      (result: any, current: any) => {
-        const currentAccounts = current.accounts.map((account: any) => {
-          return { ...account, isSigner: false };
-        });
-        result = result.concat(currentAccounts, {
-          pubkey: current.program,
-          isSigner: false,
-          isWritable: false,
-        });
+    const remainingAccountMetas: AccountMeta[] = flowActions.reduce((result: any, current: any) => {
+      const currentAccounts = current.accounts.map((account: any) => {
+        return { ...account, isSigner: false };
+      });
+      result = result.concat(currentAccounts, {
+        pubkey: current.program,
+        isSigner: false,
+        isWritable: false,
+      });
 
-        return result;
-      },
-      []
-    );
-    let ctx = {
+      return result;
+    }, []);
+    const ctx = {
       accounts: {
         flow: flowAddress,
         safe: safeAddress,
@@ -287,8 +268,7 @@ export class InstructionBuilder {
       remainingAccounts: remainingAccountMetas,
     };
 
-    const executeMultisigFlowIx =
-      this.program.instruction.executeMultisigFlow(ctx);
+    const executeMultisigFlowIx = this.program.instruction.executeMultisigFlow(ctx);
     return executeMultisigFlowIx;
   }
 

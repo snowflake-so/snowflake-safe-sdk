@@ -1,1 +1,1 @@
-export * from "./safe-interface";
+export * from './safe-interface';

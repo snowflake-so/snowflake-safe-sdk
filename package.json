@@ -1,13 +1,16 @@
 {
   "name": "@snowflake-so/safe-sdk",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Snowflake Safe SDK - Interact with multisig wallets on Snowflake Safe",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p src",
     "watch": "tsc -w -p src",
-    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
+    "lint": "npx eslint --debug '**/*.{js,ts}'",
+    "lint:fix": "npx eslint --fix '**/*.{js,ts}'",
+    "prettier:fix": "prettier --config .prettierrc.js '**/*.{js,ts}' --write",
+    "prettier:check": "prettier --config .prettierrc.js '**/*.{js,ts}' --check",
     "prepublish": "tsc -p src",
     "test": "jest"
   },
@@ -36,6 +39,11 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.30.6",
+    "@typescript-eslint/parser": "^5.30.6",
+    "eslint": "^8.0.0",
+    "pre-commit": "^1.2.2",
+    "prettier": "^2.1.2",
     "@types/bn.js": "^5.1.0",
     "@types/jest": "^27.5.2",
     "@types/mocha": "^9.1.0",

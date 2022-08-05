@@ -1,10 +1,5 @@
-import {
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-  TransactionSignature,
-} from "@solana/web3.js";
-import { MultisigJob, SerializableAction } from "src/models";
+import { PublicKey, TransactionInstruction, TransactionSignature } from '@solana/web3.js';
+import { MultisigJob } from 'src/models';
 
 export interface ISnowflakeSafe {
   createSafe(
@@ -35,14 +30,9 @@ export interface ISnowflakeSafe {
 
   rejectProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
-  abortRecurringProposal(
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature>;
+  abortRecurringProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
-  executeProposal(
-    proposalAddress: PublicKey,
-    proposalActions: SerializableAction[]
-  ): Promise<TransactionSignature>;
+  executeProposal(proposalAddress: PublicKey): Promise<TransactionSignature>;
 
   createAddOwnerProposalInstruction(
     safeAddress: PublicKey,
@@ -57,10 +47,5 @@ export interface ISnowflakeSafe {
   createChangeThresholdProposalInstruction(
     safeAddress: PublicKey,
     threshold: number
-  ): Promise<TransactionInstruction>;
-
-  createAddOwnerProposalInstruction(
-    safeAddress: PublicKey,
-    safeOwner: PublicKey
   ): Promise<TransactionInstruction>;
 }

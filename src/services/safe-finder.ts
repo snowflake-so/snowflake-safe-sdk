@@ -1,7 +1,7 @@
-import { Program } from "@project-serum/anchor";
-import { GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
-import { MultisigJob } from "../models/multisig-job";
-import { SafeType } from "../models/safe";
+import { Program } from '@project-serum/anchor';
+import { GetProgramAccountsFilter, PublicKey } from '@solana/web3.js';
+import { MultisigJob } from '../models/multisig-job';
+import { SafeType } from '../models/safe';
 
 export default class SafeFinder {
   program: Program;
@@ -21,17 +21,13 @@ export default class SafeFinder {
   }
 
   async findJobsOfSafe(safeAddress: PublicKey): Promise<MultisigJob[]> {
-    let ownerFilter = this.getSafeAddressFilter(safeAddress);
-    let serJobs: any[] = await this.program.account.flow.all([ownerFilter]);
+    const ownerFilter = this.getSafeAddressFilter(safeAddress);
+    const serJobs: any[] = await this.program.account.flow.all([ownerFilter]);
 
-    return serJobs.map((v) =>
-      MultisigJob.fromSerializableJob(v.account, v.publicKey)
-    ) as any;
+    return serJobs.map(v => MultisigJob.fromSerializableJob(v.account, v.publicKey)) as any;
   }
 
-  async findSafeAddressDerivedFromJob(
-    jobAddress: PublicKey
-  ): Promise<PublicKey> {
+  async findSafeAddressDerivedFromJob(jobAddress: PublicKey): Promise<PublicKey> {
     const serJob: any = await this.findJob(jobAddress);
     return serJob.safe;
   }

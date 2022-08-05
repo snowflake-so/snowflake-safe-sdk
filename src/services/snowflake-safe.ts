@@ -4,21 +4,18 @@ import {
   SystemProgram,
   TransactionInstruction,
   TransactionSignature,
-} from "@solana/web3.js";
-import {
-  MEMO_PROGRAM_ID,
-  SNOWFLAKE_SAFE_PROGRAM_ID,
-} from "../config/program-id";
-import SafeFinder from "./safe-finder";
-import { AnchorProvider, Idl, Program, utils } from "@project-serum/anchor";
-import { InstructionBuilder } from "../builders/instruction-builder";
-import { SNOWFLAKE_SAFE_IDL } from "../idl";
-import { ISnowflakeSafe } from "../interfaces/safe-interface";
-import { TransactionSender } from "./transaction-sender";
-import { MultisigJob, SafeType, SerializableAction } from "../models";
-import { DEFAULT_FLOW_SIZE, ErrorMessage } from "../config";
-import { MultisigJobBuilder } from "../builders";
-import { toLamportsByDecimal } from "../utils/lamports";
+} from '@solana/web3.js';
+import { MEMO_PROGRAM_ID, SNOWFLAKE_SAFE_PROGRAM_ID } from '../config/program-id';
+import SafeFinder from './safe-finder';
+import { AnchorProvider, Idl, Program, utils } from '@project-serum/anchor';
+import { InstructionBuilder } from '../builders/instruction-builder';
+import { SNOWFLAKE_SAFE_IDL } from '../idl';
+import { ISnowflakeSafe } from '../interfaces/safe-interface';
+import { TransactionSender } from './transaction-sender';
+import { MultisigJob, SafeType, SerializableAction } from '../models';
+import { DEFAULT_FLOW_SIZE, ErrorMessage } from '../config';
+import { MultisigJobBuilder } from '../builders';
+import { toLamportsByDecimal } from '../utils/lamports';
 
 export class SnowflakeSafe implements ISnowflakeSafe {
   program: Program;
@@ -27,11 +24,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
   wallet: PublicKey;
   finder: SafeFinder;
   constructor(provider: AnchorProvider) {
-    this.program = new Program(
-      SNOWFLAKE_SAFE_IDL as Idl,
-      SNOWFLAKE_SAFE_PROGRAM_ID,
-      provider
-    );
+    this.program = new Program(SNOWFLAKE_SAFE_IDL as Idl, SNOWFLAKE_SAFE_PROGRAM_ID, provider);
     this.instructionBuilder = new InstructionBuilder(this.program, provider);
     this.wallet = provider.wallet.publicKey;
     this.transactionSender = new TransactionSender(provider);
@@ -64,15 +57,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     owners: PublicKey[],
     approvalsRequired: number
   ): Promise<[PublicKey, TransactionSignature]> {
-    let newSafeKeypair = Keypair.generate();
+    const newSafeKeypair = Keypair.generate();
     this.validateCreateSafe(owners, approvalsRequired);
 
     const instructions = [];
-    const [safeSignerAddress, safeSignerNonce] =
-      await this.findSafeSignerAddress(
-        newSafeKeypair.publicKey,
-        this.program.programId
-      );
+    const [safeSignerAddress, safeSignerNonce] = await this.findSafeSignerAddress(
+      newSafeKeypair.publicKey,
+      this.program.programId
+    );
     const ix = this.instructionBuilder.buildCreateSafeInstruction(
       this.wallet,
       newSafeKeypair.publicKey,
@@ -84,12 +76,11 @@ export class SnowflakeSafe implements ISnowflakeSafe {
 
     instructions.push(ix);
 
-    const accountInitDepositIx =
-      await this.instructionBuilder.buildNativeTokenTransferIx(
-        this.wallet,
-        safeSignerAddress,
-        toLamportsByDecimal(0.001, 9)
-      );
+    const accountInitDepositIx = await this.instructionBuilder.buildNativeTokenTransferIx(
+      this.wallet,
+      safeSignerAddress,
+      toLamportsByDecimal(0.001, 9)
+    );
 
     instructions.push(accountInitDepositIx);
 
@@ -136,7 +127,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     proposalInstructions: TransactionInstruction[],
     setupInstructions?: TransactionInstruction[],
     accountSize: number = DEFAULT_FLOW_SIZE,
-    isApproved: boolean = true
+    isApproved = true
   ): Promise<[PublicKey, TransactionSignature]> {
     const proposal = this.buildProposal(proposalName, proposalInstructions);
     return this.createRecurringProposal(
@@ -164,29 +155,27 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     proposal: MultisigJob,
     setupInstructions?: TransactionInstruction[],
     accountSize: number = DEFAULT_FLOW_SIZE,
-    isApproved: boolean = true
+    isApproved = true
   ): Promise<[PublicKey, TransactionSignature]> {
     const isDraft = false;
-    let newProposalKeypair = Keypair.generate();
+    const newProposalKeypair = Keypair.generate();
     proposal.validateForCreate();
 
-    const approveProposalIx =
-      await this.instructionBuilder.buildApproveProposalInstruction(
-        safeAddress,
-        newProposalKeypair.publicKey,
-        this.wallet
-      );
+    const approveProposalIx = await this.instructionBuilder.buildApproveProposalInstruction(
+      safeAddress,
+      newProposalKeypair.publicKey,
+      this.wallet
+    );
 
-    const createFlowIx =
-      await this.instructionBuilder.buildCreateFlowInstruction(
-        this.wallet,
-        accountSize,
-        proposal,
-        isDraft,
-        safeAddress,
-        newProposalKeypair,
-        SystemProgram.programId
-      );
+    const createFlowIx = await this.instructionBuilder.buildCreateFlowInstruction(
+      this.wallet,
+      accountSize,
+      proposal,
+      isDraft,
+      safeAddress,
+      newProposalKeypair,
+      SystemProgram.programId
+    );
     const instructions = [
       ...(setupInstructions ? setupInstructions : []),
       createFlowIx,
@@ -209,14 +198,9 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param proposalAddress Public key of the proposal
    * @returns A transaction signature
    */
-  async deleteProposal(
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature> {
+  async deleteProposal(proposalAddress: PublicKey): Promise<TransactionSignature> {
     const instructions = [];
-    const ix = await this.instructionBuilder.buildDeleteFlowIx(
-      this.wallet,
-      proposalAddress
-    );
+    const ix = await this.instructionBuilder.buildDeleteFlowIx(this.wallet, proposalAddress);
 
     instructions.push(ix);
 
@@ -237,9 +221,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param flowAddress Public key of the flow
    * @returns A transaction signature
    */
-  async approveProposal(
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature> {
+  async approveProposal(proposalAddress: PublicKey): Promise<TransactionSignature> {
     const instructions = [];
     const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
     const approveProposalInstruction =
@@ -268,17 +250,14 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param proposalAddress Public key of the proposal
    * @returns A transaction signature
    */
-  async rejectProposal(
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature> {
+  async rejectProposal(proposalAddress: PublicKey): Promise<TransactionSignature> {
     const instructions = [];
     const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
-    const approveProposalInstruction =
-      await this.instructionBuilder.buildRejectProposalInstruction(
-        safeAddress,
-        proposalAddress,
-        this.wallet
-      );
+    const approveProposalInstruction = await this.instructionBuilder.buildRejectProposalInstruction(
+      safeAddress,
+      proposalAddress,
+      this.wallet
+    );
 
     instructions.push(approveProposalInstruction);
 
@@ -300,9 +279,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param proposalAddress Public key of the proposal
    * @returns A transaction signature
    */
-  async abortRecurringProposal(
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature> {
+  async abortRecurringProposal(proposalAddress: PublicKey): Promise<TransactionSignature> {
     let instructions = [];
     const safeAddress = await this.fetchDerivedSafeAddress(proposalAddress);
     const abortFlowIx = await this.instructionBuilder.buildAbortFlowInstruction(
@@ -330,9 +307,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param proposalAddress Public key of the proposal
    * @returns A transaction signature
    */
-  async executeProposal(
-    proposalAddress: PublicKey
-  ): Promise<TransactionSignature> {
+  async executeProposal(proposalAddress: PublicKey): Promise<TransactionSignature> {
     let instructions = [];
     const serJob = await this.fetchProposal(proposalAddress);
     const safeAddress = serJob.safe;
@@ -342,22 +317,19 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     );
     const memoIx = new TransactionInstruction({
       keys: [],
-      data: Buffer.from("snf_exec_manual", "utf-8"),
+      data: Buffer.from('snf_exec_manual', 'utf-8'),
       programId: MEMO_PROGRAM_ID,
     });
 
-    const proposalActions = SerializableAction.fromInstructions(
-      serJob.instructions
-    );
+    const proposalActions = SerializableAction.fromInstructions(serJob.instructions);
 
-    const executeMultisigFlowIx =
-      await this.instructionBuilder.buildExecuteMultisigFlowInstruction(
-        proposalAddress,
-        safeAddress,
-        safeSignerAddress,
-        this.wallet,
-        proposalActions
-      );
+    const executeMultisigFlowIx = await this.instructionBuilder.buildExecuteMultisigFlowInstruction(
+      proposalAddress,
+      safeAddress,
+      safeSignerAddress,
+      this.wallet,
+      proposalActions
+    );
 
     instructions = [executeMultisigFlowIx, memoIx];
 
@@ -474,9 +446,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return this.finder.findJob(proposalAddress);
   }
 
-  async fetchDerivedSafeAddress(
-    proposalAddress: PublicKey
-  ): Promise<PublicKey> {
+  async fetchDerivedSafeAddress(proposalAddress: PublicKey): Promise<PublicKey> {
     return this.finder.findSafeAddressDerivedFromJob(proposalAddress);
   }
 
@@ -489,7 +459,7 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     safeProgramId: PublicKey
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
-      [utils.bytes.utf8.encode("SafeSigner"), safeAddress.toBuffer()],
+      [utils.bytes.utf8.encode('SafeSigner'), safeAddress.toBuffer()],
       safeProgramId
     );
   }

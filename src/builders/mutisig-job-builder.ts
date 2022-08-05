@@ -1,11 +1,9 @@
-import { TransactionInstruction } from "@solana/web3.js";
-import { RECURRING_FOREVER } from "../config/job-constants";
-import { MultisigJob, TriggerType, UnixTimeStamp } from "../models";
+import { TransactionInstruction } from '@solana/web3.js';
+import { RECURRING_FOREVER } from '../config/job-constants';
+import { MultisigJob, TriggerType, UnixTimeStamp } from '../models';
 
 export class MultisigJobBuilder {
   private job: MultisigJob = new MultisigJob();
-
-  constructor() {}
 
   fromExistingJob(job: MultisigJob): MultisigJobBuilder {
     this.job = job;
@@ -41,9 +39,7 @@ export class MultisigJobBuilder {
       numberOfExecutions === undefined ? RECURRING_FOREVER : numberOfExecutions;
 
     this.job.userUtcOffset =
-      userTimezoneOffset === undefined
-        ? new Date().getTimezoneOffset() * 60
-        : userTimezoneOffset;
+      userTimezoneOffset === undefined ? new Date().getTimezoneOffset() * 60 : userTimezoneOffset;
     return this;
   }
 

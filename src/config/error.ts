@@ -3,7 +3,7 @@ export enum ErrorMessage {
   UpdateJobWithoutExistingPubkey = "Can't update job without an existing pubkey.",
   CreateJobWithWeekdayCron = "Can't create job with weekday cron.",
   UpdateJobWithWeekdayCron = "Can't update job with weekday cron.",
-  InvalidCron = "Invalid cron.",
-  JobNotBuiltAsSelfFunded = "Job is not built as self-funded.",
+  InvalidCron = 'Invalid cron.',
+  JobNotBuiltAsSelfFunded = 'Job is not built as self-funded.',
   CreateSafeWithInvalidApprovalsRequired = "Can't create safe with invalid approvals required.",
 }

@@ -124,25 +124,25 @@ const ix = await snowflakeSafe.createChangeThresholdProposalInstruction(
 ### Approve a proposal
 
 ```typescript
-await snowflakeSafe.approveProposal(safeAddress, flowAddress);
+await snowflakeSafe.approveProposal(flowAddress);
 ```
 
 ### Reject a proposal
 
 ```typescript
-await snowflakeSafe.rejectProposal(safeAddress, flowAddress);
+await snowflakeSafe.rejectProposal(flowAddress);
 ```
 
 ### Execute a proposal
 
 ```typescript
-await snowflakeSafe.executeProposal(flowAddress, flowActions, safeAddress);
+await snowflakeSafe.executeProposal(flowAddress);
 ```
 
 ### Abort a recurring proposal
 
 ```typescript
-await snowflakeSafe.abortRecurringProposal(safeAddress, flowAddress);
+await snowflakeSafe.abortRecurringProposal(flowAddress);
 ```
 
 ### Build an once-off scheduled job

@@ -1,11 +1,11 @@
 {
   "name": "@snowflake-so/safe-sdk",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Snowflake Safe SDK - Interact with multisig wallets on Snowflake Safe",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p src",
+    "build": "yarn rimraf dist && tsc -p src",
     "watch": "tsc -w -p src",
     "lint": "npx eslint --debug '**/*.{js,ts}'",
     "lint:fix": "npx eslint --fix '**/*.{js,ts}'",

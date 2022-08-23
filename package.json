@@ -25,6 +25,13 @@
     "sdk",
     "cron"
   ],
+  "pre-commit": {
+    "run": [
+      "prettier:check",
+      "prettier:fix",
+      "lint"
+    ]
+  },
   "author": "team@snowflake.so",
   "repository": {
     "type": "git",

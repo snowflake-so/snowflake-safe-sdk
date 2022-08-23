@@ -468,8 +468,6 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     );
   }
 
- 
-
   private validateCreateSafe(owners: PublicKey[], threshold: number) {
     if (owners.length < threshold) {
       throw new Error(ErrorMessage.CreateSafeWithInvalidApprovalsRequired);

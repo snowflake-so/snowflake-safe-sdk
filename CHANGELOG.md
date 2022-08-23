@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2022/23/08
+
+### Changes description
+
+- Add fetch owned safes by owner address
+
+```typescript
+async findOwnedSafes(ownerAddress: PublicKey): Promise<SafeType[]>;
+```
+
+- Add unit test for the method in `snowflake.test.ts`
+
+## [1.0.6] - 2022/17/08
+
+### Changes description
+
+- Fix a minor bug in validating `createSafe` method parameters
+
 ## [1.0.4] - 2022/05/08
 
 ### Changes description

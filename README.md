@@ -42,6 +42,42 @@ The `API_URL` is the endpoint to the Solana cluster. Empty API_URL is pointed to
 let snowflakeSafe: SnowflakeSafe = new SnowflakeSafe(provider);
 ```
 
+---
+
+### Fetch safe
+
+Fetch safe onchain information by safe address
+
+```typescript
+await snowflakeSafe.fetchSafe(safeAddress);
+```
+
+### Fetch proposals of safe
+
+Fetch all onchain proposals of the safe
+
+```typescript
+await snowflakeSafe.fetchAllProposals(safeAddress);
+```
+
+### Fetch proposal
+
+Fetch onchain proposal information
+
+```typescript
+await snowflakeSafe.fetchProposal(proposalAddress);
+```
+
+### Fetch owned safes
+
+Fetch all safes that the provided wallet owned
+
+```typescript
+await snowflakeSafe.fetchOwnedSafes(ownerAddress);
+```
+
+---
+
 ### Create a new safe
 
 Create a new safe with one owner and approvals required as one
@@ -62,11 +98,7 @@ const [newSafeAddress, txId] = await snowflakeSafe.createSafe(
 Create a new proposal that can be executed by any safe owners
 
 ```typescript
-const response = await snowflakeSafe.createProposal(
-  safeAddress,
-  "hello world",
-  instructions
-);
+const response = await snowflakeSafe.createProposal(safeAddress, 'hello world', instructions);
 ```
 
 ### Create a new recurring proposal
@@ -75,9 +107,9 @@ Create a new recurring proposal that can be executed automatically by Snowflake 
 
 ```typescript
 const proposal = new MultisigJobBuilder()
-  .jobName("hello world")
+  .jobName('hello world')
   .jobInstructions(instructions)
-  .scheduleCron("0 0 * * *")
+  .scheduleCron('0 0 * * *')
   .build();
 
 const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
@@ -93,10 +125,7 @@ const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
 The method will create a new instruction to propose adding new owner to the safe
 
 ```typescript
-const ix = await snowflakeSafe.createAddOwnerProposalInstruction(
-  safeAddress,
-  newOwner
-);
+const ix = await snowflakeSafe.createAddOwnerProposalInstruction(safeAddress, newOwner);
 ```
 
 #### Remove owner proposal
@@ -104,10 +133,7 @@ const ix = await snowflakeSafe.createAddOwnerProposalInstruction(
 The method will create a new instruction to propose removing an existing owner from the safe
 
 ```typescript
-const ix = await snowflakeSafe.createRemoveOwnerProposalInstruction(
-  safeAddress,
-  newOwner
-);
+const ix = await snowflakeSafe.createRemoveOwnerProposalInstruction(safeAddress, newOwner);
 ```
 
 #### Change threshold proposal
@@ -115,10 +141,7 @@ const ix = await snowflakeSafe.createRemoveOwnerProposalInstruction(
 The method will create a new instruction to propose changing threshold of the safe
 
 ```typescript
-const ix = await snowflakeSafe.createChangeThresholdProposalInstruction(
-  safeAddress,
-  newThreshold
-);
+const ix = await snowflakeSafe.createChangeThresholdProposalInstruction(safeAddress, newThreshold);
 ```
 
 ### Approve a proposal
@@ -145,13 +168,15 @@ await snowflakeSafe.executeProposal(flowAddress);
 await snowflakeSafe.abortRecurringProposal(flowAddress);
 ```
 
+---
+
 ### Build an once-off scheduled job
 
 With Snowflake SDK, you can create a job with two line of code.
 
 ```typescript
 const job = new MultisigJobBuilder()
-  .jobName("hello world")
+  .jobName('hello world')
   .jobInstructions(instructions)
   .scheduleOnce(tomorrow())
   .build();
@@ -163,9 +188,9 @@ Schedule a job that runs every minute for 10 times.
 
 ```typescript
 const job = new MultisigJobBuilder()
-  .jobName("hello world")
+  .jobName('hello world')
   .jobInstructions(instructions)
-  .scheduleCron("* * * * *", 10)
+  .scheduleCron('* * * * *', 10)
   .build();
 ```
 
@@ -173,9 +198,9 @@ Schedule a job that runs at 10:00 AM on the first day of every month .
 
 ```typescript
 const job = new MultisigJobBuilder()
-  .jobName("hello world")
+  .jobName('hello world')
   .jobInstructions(instructions)
-  .scheduleCron("0 10 1 * *")
+  .scheduleCron('0 10 1 * *')
   .build();
 ```
 
@@ -185,7 +210,7 @@ Schedule a job that is triggered based on an arbitrary condition defined within 
 
 ```typescript
 const job = new MultisigJobBuilder()
-  .jobName("hello world")
+  .jobName('hello world')
   .jobInstructions(instructions)
   .scheduleConditional(1)
   .build();
@@ -201,5 +226,6 @@ If you have any problem with using the SDK in your system, drop a question our S
 
 If you find a bug or have any problem and idea while using the SDK, you can create an issue on SDK Github.
 
-License
-MIT
+## License
+
+Apache Version 2.0

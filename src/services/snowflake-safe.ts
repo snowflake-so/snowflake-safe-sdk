@@ -450,6 +450,10 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return this.finder.findSafeAddressDerivedFromJob(proposalAddress);
   }
 
+  async fetchOwnedSafes(ownerAddress: PublicKey): Promise<SafeType[]> {
+    return this.finder.findOwnedSafes(ownerAddress);
+  }
+
   async fetchAllProposals(safeAddress: PublicKey): Promise<MultisigJob[]> {
     return this.finder.findJobsOfSafe(safeAddress);
   }
@@ -463,6 +467,8 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       safeProgramId
     );
   }
+
+ 
 
   private validateCreateSafe(owners: PublicKey[], threshold: number) {
     if (owners.length < threshold) {

@@ -11,7 +11,18 @@ export default class SafeFinder {
 
   async findSafe(safeAddress: PublicKey): Promise<SafeType> {
     const safe: any = await this.program.account.safe.fetch(safeAddress);
-    return safe;
+    return Object.assign(safe, {
+      safeAddress,
+    });
+  }
+
+  async findOwnedSafes(ownerAddress: PublicKey): Promise<SafeType[]> {
+    const safes = await this.program.account.safe.all();
+    const ownedSafes = this.getOwnedSafesFilter(safes, ownerAddress);
+    return ownedSafes.map<SafeType>(safe => ({
+      safeAddress: safe.publicKey,
+      ...safe.account,
+    }));
   }
 
   async findJob(jobAddress: PublicKey): Promise<MultisigJob> {
@@ -30,6 +41,12 @@ export default class SafeFinder {
   async findSafeAddressDerivedFromJob(jobAddress: PublicKey): Promise<PublicKey> {
     const serJob: any = await this.findJob(jobAddress);
     return serJob.safe;
+  }
+
+  private getOwnedSafesFilter(safes: any[], ownerAddress: PublicKey) {
+    return safes.filter(safe =>
+      safe.account.owners.some((owner: PublicKey) => owner?.toString() === ownerAddress.toString())
+    );
   }
 
   private getSafeAddressFilter(publicKey: PublicKey): GetProgramAccountsFilter {

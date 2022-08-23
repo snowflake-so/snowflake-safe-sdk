@@ -10,7 +10,7 @@ import {
 import { RECURRING_FOREVER } from '../src/config';
 import { MultisigJobBuilder } from '../src/builders/mutisig-job-builder';
 import { DEFAULT_FLOW_SIZE } from '../src/config/job-config';
-import { ProposalStateType, TriggerType } from '../src/models';
+import { ProposalStateType, SafeType, TriggerType } from '../src/models';
 import { SnowflakeSafe } from '../src/services/snowflake-safe';
 import { instructions, testWallet } from './test-data';
 import { initAnchorProvider } from '../src/utils';
@@ -75,6 +75,9 @@ describe('create', () => {
     expect(fetchedSafe.ownerSetSeqno).toBe(0);
     expect(fetchedSafe.approvalsRequired).toBe(input.approvalsRequired);
     expect(fetchedSafe.owners.length).toBe(input.owners.length);
+
+    const ownerSafes = await snowflakeSafe.fetchOwnedSafes(owner);
+    expect(ownerSafes.some((safe: SafeType) => safe.safeAddress.equals(safeAddress))).toBeTruthy();
   });
   test('create proposal', async function () {
     const [newProposalAddress] = await createFlow(instructions);

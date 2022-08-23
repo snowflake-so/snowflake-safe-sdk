@@ -6,4 +6,13 @@ module.exports = {
     '^.+\\.(ts|tsx)$': 'ts-jest',
   },
   setupFiles: ['./test-env'],
+  collectCoverage: true,
+  coverageThreshold: {
+    global: {
+      branches: 50, // 90,
+      functions: 50, // 95,
+      lines: 50, // 95,
+      statements: 50, // 95,
+    },
+  },
 };

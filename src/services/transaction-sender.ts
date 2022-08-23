@@ -5,7 +5,7 @@ import {
   TransactionSignature,
 } from '@solana/web3.js';
 import { AnchorProvider } from '@project-serum/anchor';
-import { InstructionsAndSigners } from 'src/models';
+import { InstructionsAndSigners } from '../models';
 
 const DEFAULT_TIMEOUT = 30000;
 export async function sleep(ms: any) {

@@ -1,5 +1,5 @@
 import { PublicKey, TransactionInstruction, TransactionSignature } from '@solana/web3.js';
-import { MultisigJob } from 'src/models';
+import { MultisigJob } from '../models';
 
 export interface ISnowflakeSafe {
   createSafe(

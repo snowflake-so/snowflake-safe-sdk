@@ -1,6 +1,6 @@
 {
   "name": "@snowflake-so/safe-sdk",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Snowflake Safe SDK - Interact with multisig wallets on Snowflake Safe",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

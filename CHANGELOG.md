@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2022/03/10
+
+### Changes description
+
+- Allow create proposal with large payload
+- New create recurring proposal instructions method added to support create proposal with separated actions.
+```typescript
+const [newProposalAddress] = await snowflakeSafe.createProposal(
+  safeAddress,
+  'hello world',
+  instructions,
+  [],
+  DEFAULT_FLOW_SIZE,
+  true,
+  true // Set separatedActions parameter to true
+);
+```
+
 ## [1.0.7] - 2022/23/08
 
 ### Changes description

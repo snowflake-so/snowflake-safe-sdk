@@ -127,7 +127,8 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     proposalInstructions: TransactionInstruction[],
     setupInstructions?: TransactionInstruction[],
     accountSize: number = DEFAULT_FLOW_SIZE,
-    isApproved = true
+    isApproved = true,
+    separatedActions = false
   ): Promise<[PublicKey, TransactionSignature]> {
     const proposal = this.buildProposal(proposalName, proposalInstructions);
     return this.createRecurringProposal(
@@ -135,8 +136,72 @@ export class SnowflakeSafe implements ISnowflakeSafe {
       proposal,
       setupInstructions,
       accountSize,
-      isApproved
+      separatedActions,
+      isApproved,
+      separatedActions
     );
+  }
+
+  /** ## Create recurring proposal instructions
+   *
+   * @param safeAddress Public key of the safe
+   * @param proposalKeypair New keypair generated of a proposal
+   * @param proposal Multisig proposal class object
+   * @param setupInstructions Setup instructions
+   * @param accountSize Proposal account size
+   * @param isDraft Check if proposal is draft (for separated actions proposal only)
+   * @param isApproved Auto approved by creator when proposal created
+   * @param separatedActions Check if proposal has separated actions added
+   * @returns
+   */
+  async createRecurringProposalInstructions(
+    safeAddress: PublicKey,
+    proposalKeypair: Keypair,
+    proposal: MultisigJob,
+    setupInstructions?: TransactionInstruction[],
+    accountSize: number = DEFAULT_FLOW_SIZE,
+    isDraft = false,
+    isApproved = true,
+    separatedActions = false
+  ) {
+    proposal.validateForCreate();
+
+    const approveProposalIx = await this.instructionBuilder.buildApproveProposalInstruction(
+      safeAddress,
+      proposalKeypair.publicKey,
+      this.wallet
+    );
+
+    let addActionIxs: TransactionInstruction[] = [];
+    if (separatedActions) {
+      addActionIxs = await this.createAddProposalActionInstructions(
+        proposalKeypair.publicKey,
+        proposal.instructions.map(SerializableAction.fromInstruction)
+      );
+
+      proposal.instructions = [];
+    }
+
+    const createFlowIx = await this.instructionBuilder.buildCreateFlowInstruction(
+      this.wallet,
+      accountSize,
+      proposal,
+      isDraft,
+      safeAddress,
+      proposalKeypair,
+      SystemProgram.programId
+    );
+    const otherIxs: TransactionInstruction[] = [
+      ...addActionIxs,
+      ...(isApproved ? [approveProposalIx] : []),
+    ];
+    const instructions: TransactionInstruction[] = [
+      ...(setupInstructions ? setupInstructions : []),
+      createFlowIx,
+      ...otherIxs,
+    ];
+
+    return instructions;
   }
 
   /** ## Create a recurring proposal
@@ -148,6 +213,8 @@ export class SnowflakeSafe implements ISnowflakeSafe {
    * @param proposal Proposal
    * @param setupInstructions List of instructions to setup the proposal (createAssociatedTokenAccount...)
    * @param accountSize The size of the account (default: 1800)
+   * @param isDraft Set the proposal as draft to allow adding more actions (default: false)
+   * @param isApproved Allow auto approved by creator when proposal created (default: true)
    * @returns Proposal address and a transaction signature
    */
   async createRecurringProposal(
@@ -155,32 +222,22 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     proposal: MultisigJob,
     setupInstructions?: TransactionInstruction[],
     accountSize: number = DEFAULT_FLOW_SIZE,
-    isApproved = true
+    isDraft = false,
+    isApproved = true,
+    separatedActions = false
   ): Promise<[PublicKey, TransactionSignature]> {
-    const isDraft = false;
     const newProposalKeypair = Keypair.generate();
-    proposal.validateForCreate();
 
-    const approveProposalIx = await this.instructionBuilder.buildApproveProposalInstruction(
-      safeAddress,
-      newProposalKeypair.publicKey,
-      this.wallet
-    );
-
-    const createFlowIx = await this.instructionBuilder.buildCreateFlowInstruction(
-      this.wallet,
-      accountSize,
-      proposal,
-      isDraft,
+    const instructions = await this.createRecurringProposalInstructions(
       safeAddress,
       newProposalKeypair,
-      SystemProgram.programId
+      proposal,
+      setupInstructions,
+      accountSize,
+      isDraft,
+      isApproved,
+      separatedActions
     );
-    const instructions = [
-      ...(setupInstructions ? setupInstructions : []),
-      createFlowIx,
-      ...(isApproved ? [approveProposalIx] : []),
-    ];
     const tx = await this.transactionSender.sendWithWallet({
       instructions,
       signers: [newProposalKeypair],
@@ -419,23 +476,31 @@ export class SnowflakeSafe implements ISnowflakeSafe {
     return ix;
   }
 
-  /** ## Create add proposal action instruction
-   * Note: Add new action to the proposal
+  /** ## Create add proposal action instructions
+   * Note: Add new actions to the proposal
    * @param proposalAddress Public key of the proposal
-   * @param proposalAction Proposal action
+   * @param proposalActions List of proposal action
    * @returns
    */
-  async createAddProposalActionInstruction(
+  async createAddProposalActionInstructions(
     proposalAddress: PublicKey,
-    proposalAction: SerializableAction
-  ): Promise<TransactionInstruction> {
-    const ix = await this.instructionBuilder.buildAddFlowActionInstruction(
-      proposalAddress,
-      proposalAction,
-      this.wallet
-    );
+    proposalActions: SerializableAction[]
+  ): Promise<TransactionInstruction[]> {
+    const ixs: TransactionInstruction[] = [];
+    let index = 0;
+    for (const proposalAction of proposalActions) {
+      const finishDraft = index === proposalActions.length - 1;
+      const ix = await this.instructionBuilder.buildAddFlowActionInstruction(
+        proposalAddress,
+        proposalAction,
+        finishDraft,
+        this.wallet
+      );
+      ixs.push(ix);
+      index++;
+    }
 
-    return ix;
+    return ixs;
   }
 
   async fetchSafe(safeAddress: PublicKey): Promise<SafeType> {

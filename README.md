@@ -118,6 +118,22 @@ const [newProposalAddress, txId] = await snowflakeSafe.createRecurringProposal(
 );
 ```
 
+### Create a proposal with large payload
+
+In production, there is proposal created with multiple actions which has bunches of accounts. This method is used to solve the issue
+
+```typescript
+const [newProposalAddress] = await snowflakeSafe.createProposal(
+  safeAddress,
+  'hello world',
+  instructions,
+  [],
+  DEFAULT_FLOW_SIZE,
+  true,
+  true // Set separatedActions parameter to true
+);
+```
+
 ### Update an existing safe
 
 #### Add owner proposal

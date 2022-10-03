@@ -1,6 +1,6 @@
 import { instructions, rightNow, tomorrow } from './test-data';
 import { MultisigJobBuilder } from '../src/builders';
-import { TriggerType } from '../src/models';
+import { SerializableAction, TriggerType } from '../src/models';
 
 test('build once-off scheduled job', async function () {
   const job = new MultisigJobBuilder()
@@ -38,4 +38,10 @@ test('build cron weekday job', () => {
   expect(job.recurring).toBe(true);
   expect(job.name).toBe('hello world');
   expect(job.triggerType).toBe(TriggerType.Time);
+});
+
+test('build serializable action from instruction', () => {
+  const actions = instructions.map(SerializableAction.fromInstruction);
+  expect(actions.length).toBe(instructions.length);
+  console.log(actions);
 });

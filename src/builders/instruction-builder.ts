@@ -225,8 +225,10 @@ export class InstructionBuilder {
   buildAddFlowActionInstruction(
     flowAddress: PublicKey,
     flowAction: SerializableAction,
+    finishDraft: boolean,
     requestedByAddress: PublicKey
   ): TransactionInstruction {
+    console.log(flowAddress);
     const ctx = {
       accounts: {
         flow: flowAddress,
@@ -234,7 +236,7 @@ export class InstructionBuilder {
       },
       signers: [],
     };
-    const addFlowActionIx = this.program.instruction.addAction(flowAction, ctx);
+    const addFlowActionIx = this.program.instruction.addAction(flowAction, finishDraft, ctx);
     return addFlowActionIx;
   }
 

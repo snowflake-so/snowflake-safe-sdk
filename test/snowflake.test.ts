@@ -90,6 +90,26 @@ describe('create', () => {
     expect(flow.triggerType).toBe(TriggerType.None);
     expect(flow.instructions.length).toBe(1);
   });
+  test('create draft proposal - add actions later', async function () {
+    const [newProposalAddress] = await snowflakeSafe.createProposal(
+      safeAddress,
+      'hello world',
+      instructions,
+      [],
+      DEFAULT_FLOW_SIZE,
+      true,
+      true
+    );
+
+    const flow = await snowflakeSafe.fetchProposal(newProposalAddress);
+
+    expect(flow.instructions.length).toBe(1);
+    expect(flow.proposalStage).toBe(ProposalStateType.Approved);
+    expect(flow.safe.toString()).toBe(safeAddress.toString());
+    expect(flow.approvals.length).toBe(1);
+    expect(flow.triggerType).toBe(TriggerType.None);
+    expect(flow.instructions.length).toBe(1);
+  });
 
   test('create recurring proposal', async function () {
     const [newProposalAddress] = await createRecurringFlow(instructions);
